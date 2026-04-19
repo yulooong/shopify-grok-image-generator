@@ -23,27 +23,35 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, roomDescription } = req.body || {};
+    // ✅ image: imageDataUri is now correctly extracted from the request body
+    const { prompt, roomDescription, image: imageDataUri } = req.body || {};
+
+    if (!imageDataUri) {
+      return res.status(400).json({ error: 'No image provided in request body' });
+    }
 
     // Build a detailed prompt from what the user described
-    const finalPrompt = prompt || 
+    const finalPrompt = prompt ||
       `A clean, professional architectural floorplan with furniture added. 
        The furniture should be neatly placed and to scale. 
        Style: top-down 2D floorplan view. 
        ${roomDescription ? 'Room details: ' + roomDescription : ''}`;
 
-    console.log('✅ Sending prompt to Grok Aurora:', finalPrompt);
+    console.log('✅ Sending prompt to Grok:', finalPrompt);
 
-    const grokResponse = await fetch('https://api.x.ai/v1/images/generations', {
+    const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "grok-imagine-image",           // ✅ Correct model name
+        model: "grok-imagine-image",
         prompt: finalPrompt,
-        n: 1
+        image: {
+          url: imageDataUri,   // ✅ now correctly defined
+          type: "image_url"
+        }
       })
     });
 
@@ -55,9 +63,9 @@ export default async function handler(req, res) {
 
     if (!grokResponse.ok) {
       console.error('❌ Grok API error:', data);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: data.error?.message || 'Grok API returned an error',
-        detail: data  // This shows the full error in your browser console
+        detail: data
       });
     }
 
