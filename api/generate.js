@@ -7,7 +7,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle preflight request from browser
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -16,14 +15,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Check API key exists before doing anything
   if (!process.env.XAI_API_KEY) {
     console.error('❌ XAI_API_KEY is not set in Vercel environment variables');
     return res.status(500).json({ error: 'Server misconfiguration: API key missing' });
   }
 
   try {
-    // ✅ image is extracted from the request body
     const { image: imageDataUri } = req.body || {};
 
     if (!imageDataUri) {
@@ -31,109 +28,118 @@ export default async function handler(req, res) {
     }
 
     const finalPrompt = `
-You are an expert AI specializing in architectural floorplan enhancement and interior layout optimization.
-Your goal is to produce realistic, functional, and spatially accurate furniture layouts — prioritizing real-world usability over creativity.
+You are an expert architectural drafter. Your ONLY job is to add furniture outlines to an existing floorplan image.
 
-I am uploading a bird's eye view floorplan image of a house. Edit this image and output ONLY the final edited image (no text, no explanations).
+========================================
+RULE 0 — ABSOLUTE STRUCTURAL PRESERVATION (MOST IMPORTANT)
+========================================
+You must NEVER add, move, remove, or alter ANY of the following:
+  - Walls
+  - Doors (including door swing arcs)
+  - Windows
+  - Staircases
+  - Room boundaries or openings
 
-----------------------------------------
-WALL STANDARDIZATION
-----------------------------------------
-Convert all walls into clean, bold black lines with consistent thickness.
-Walls must be clearly distinguishable from all other elements.
+The structural layout must be 100% identical to the uploaded image.
+Only furniture is added. Nothing else changes.
 
-----------------------------------------
-ROOM & LAYOUT PROCESS (MANDATORY)
-----------------------------------------
-For each room, follow this exact process:
+========================================
+WALL RENDERING
+========================================
+Redraw all existing walls as clean, bold, solid black lines.
+Do not change wall positions, thickness ratios, or room shapes.
 
-  Step 1: Identify the room type based on layout, size, and connectivity.
-  Step 2: Define the room's primary function and focal point.
-  Step 3: Place the main anchor furniture first (bed, sofa, or dining table).
-  Step 4: Add secondary furniture ONLY if space allows after applying clearance rules.
-  Step 5: Validate walkability, spacing, and realism before finalizing.
+========================================
+STEP-BY-STEP ROOM PROCESS
+========================================
+For EACH room:
+  1. Identify room type from its shape, size, and position in the floorplan.
+  2. Check all door positions — furniture must never block any door or its swing path.
+  3. Place ONLY the anchor piece first (bed / sofa / dining table).
+  4. Add secondary items ONLY if there is clear space remaining.
+  5. If the room is small or ambiguous, add minimal or no furniture.
 
-If a room is too small or unclear, place minimal or no furniture.
+========================================
+EXACT FURNITURE LIMITS PER ROOM TYPE
+========================================
 
-----------------------------------------
-STRICT PLACEMENT RULES (NON-NEGOTIABLE)
-----------------------------------------
-1. All furniture must be fully inside room boundaries — no overlaps with walls.
-2. Maintain walking clearance:
-   - Main paths: 70–90 cm
-   - Secondary paths: 50–60 cm
-3. Do NOT block:
-   - Doors (assume door swing clearance even if not shown)
-   - Windows
-   - Entryways between rooms
-4. Align furniture to walls or center it logically. No random angles.
-5. Keep all furniture aligned to the room's primary axis (horizontal/vertical).
-6. Maintain realistic spacing:
-   - Bed: at least one accessible side (≥50 cm)
-   - Sofa ↔ coffee table: 30–50 cm
-   - Dining chairs: ≥60 cm clearance behind
-7. Scale furniture proportionally to room size.
-8. Each room must have ONE clear focal point (e.g., bed, TV, dining table).
+LIVING ROOM:
+  - Exactly 1 sofa or L-shaped sofa
+  - Exactly 1 coffee table
+  - Exactly 1 TV console (placed against a wall, opposite the sofa)
+  - Optional: 1 small side table or plant (only if space allows)
 
-----------------------------------------
-FURNITURE RULES (MINIMAL & REALISTIC)
-----------------------------------------
-Only include essential furniture:
+BEDROOM:
+  - Exactly 1 bed
+  - Maximum 1–2 bedside tables (only if space allows beside the bed)
+  - Optional: 1 dresser against a wall (only in larger bedrooms)
 
-  - Living room:  1 sofa (or L-shape), 1 coffee table, 1 TV console. Optional: 1 rug or plant.
-  - Bedroom:      1 bed, max 2 bedside tables, optional dresser.
-  - Dining:       1 table with chairs (ensure proper clearance).
-  - Kitchen:      Essential fixtures only (counter, stove, sink, fridge).
-  - Bathroom:     Sink, toilet, shower/bath only.
+DINING ROOM / DINING AREA:
+  - Exactly 1 dining table
+  - Chairs placed only around the table (2–6 chairs depending on table size)
 
-Do NOT overfill spaces. Empty space is intentional and important.
+KITCHEN:
+  - Trace and preserve existing counter/fixture shapes only
+  - Add: 1 stove symbol, 1 fridge symbol, 1 sink symbol — all along walls
+  - Do NOT add a dining table inside the kitchen unless there is clear open space
 
-----------------------------------------
-AVOID THESE MISTAKES
-----------------------------------------
-  - No overcrowding
-  - No floating or misaligned furniture
-  - No blocking functional paths
-  - No unrealistic layouts (e.g., bed against door, TV behind sofa)
-  - No forcing furniture into small rooms
-  - No unnecessary symmetry
+BATHROOM (CRITICAL — READ CAREFULLY):
+  - Exactly 1 toilet
+  - Exactly 1 sink (never 2, never 0)
+  - Exactly 1 shower OR 1 bathtub — NOT both, unless the room is clearly large enough for both
+  - Do not add any other items
 
-----------------------------------------
+SMALL ROOMS / UNCLEAR ROOMS:
+  - If the room purpose is unclear or the space is tight: add nothing
+  - Never force furniture into a room that does not have enough space
+
+========================================
+SPACING & CLEARANCE RULES
+========================================
+  - Minimum 80 cm clearance on all main walking paths
+  - Minimum 50 cm clearance on secondary paths (e.g., beside a bed)
+  - Sofa to coffee table gap: 35–45 cm
+  - Dining chairs need ≥60 cm pull-out space behind them
+  - No furniture within 60 cm of any door opening
+
+========================================
 VISUAL STYLE
-----------------------------------------
-  - Furniture must be simple black outline drawings only
-  - No colors, no shading, no fills
-  - Clean, minimal linework only
-  - Mix of shapes (rectangular + some rounded elements) for realism
+========================================
+  - All furniture: simple black outlines only
+  - No fills, no shading, no colours, no gradients
+  - No labels or text of any kind on furniture
+  - Clean, thin, consistent linework
+  - Mix of rectangular and slightly rounded shapes for realism
 
-----------------------------------------
+========================================
 CLEANUP
-----------------------------------------
-Remove ALL text, labels, and annotations from the image completely.
+========================================
+  - Remove ALL existing text, room labels, dimension lines, and annotations
+  - Keep only: walls, doors, windows, stairs, and the new furniture outlines
 
-----------------------------------------
-FINAL VALIDATION (MANDATORY)
-----------------------------------------
-Before output:
-  - Ensure no overlaps or blocked paths
-  - Ensure all spacing rules are followed
-  - Ensure the layout looks like a real, livable home
-  - Remove anything awkward, excessive, or unrealistic
-
-----------------------------------------
+========================================
 OUTPUT REQUIREMENTS
-----------------------------------------
-  - Output ONLY the final edited floorplan image
+========================================
+  - Output the final image ONLY — no text, no commentary
   - Plain white background
-  - Maintain original aspect ratio
-  - Resize for A4 printing:
-      - Target width: 18–19 cm at 300 DPI (~2126–2244 pixels)
-      - No distortions, no additional elements
+  - Preserve the original image's aspect ratio exactly
+  - Target width: 2126–2244 pixels (18–19 cm at 300 DPI) for A4 printing
+  - No distortions
 
-Execute with precision and realism.
+========================================
+FINAL CHECK BEFORE OUTPUT
+========================================
+Verify each of the following before rendering:
+  [ ] No new doors, windows, or walls were added
+  [ ] No door or window is blocked by furniture
+  [ ] Every bathroom has exactly 1 sink, 1 toilet, 1 shower or bath
+  [ ] No room is overcrowded
+  [ ] All furniture is fully inside room boundaries
+  [ ] All text and labels are removed
+  [ ] Layout looks like a real, livable home
 `.trim();
 
-    console.log('✅ Sending floorplan image to Grok for furniture generation...');
+    console.log('✅ Sending floorplan image to Grok...');
 
     const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
       method: 'POST',
@@ -153,7 +159,6 @@ Execute with precision and realism.
 
     const data = await grokResponse.json();
 
-    // Log the full Grok response so you can see it in Vercel logs
     console.log('Grok response status:', grokResponse.status);
     console.log('Grok response body:', JSON.stringify(data));
 
