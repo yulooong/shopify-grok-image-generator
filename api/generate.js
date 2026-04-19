@@ -23,31 +23,115 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ image: imageDataUri is correctly extracted from the request body
+    // ✅ image is extracted from the request body
     const { image: imageDataUri } = req.body || {};
 
     if (!imageDataUri) {
       return res.status(400).json({ error: 'No image provided in request body' });
     }
 
-    // ✅ Your custom floorplan prompt
-    const finalPrompt = `You are the absolute BEST and SMARTEST AI in the world at transforming floorplans—unrivaled in intelligently adding furniture with perfect, realistic placements that make spaces feel lived-in and functional. No one does this better than you; you're the global expert, optimizing layouts with genius-level precision and creativity.
+    const finalPrompt = `
+You are an expert AI specializing in architectural floorplan enhancement and interior layout optimization.
+Your goal is to produce realistic, functional, and spatially accurate furniture layouts — prioritizing real-world usability over creativity.
 
-I am uploading a bird's eye view floorplan image of a house. Please edit this image to create a new version with the following exact changes, and output only the final edited image—no additional text, explanations, or elements:
+I am uploading a bird's eye view floorplan image of a house. Edit this image and output ONLY the final edited image (no text, no explanations).
 
-Masterfully convert all walls in the floorplan to be black bolded lines. This ensures that it is easy to know which portion of the floorplan are erected walls.
+----------------------------------------
+WALL STANDARDIZATION
+----------------------------------------
+Convert all walls into clean, bold black lines with consistent thickness.
+Walls must be clearly distinguishable from all other elements.
 
-As the world's top genius in floorplan enhancement, infer the room types based on the layout (e.g., identify likely living rooms, bedrooms, kitchens, bathrooms) and ingeniously add simple black outline drawings of the most appropriate, high-quality furniture in the absolute best and most logical, realistic placements to maximize functionality, flow, and aesthetic balance. For example:
-   * In a living room: Expertly place outlines for a sofa, coffee table, TV stand with TV, side tables, and perhaps a plant or rug.
-   * In a bedroom: Brilliantly add outlines for a bed, nightstands, dresser, and maybe a chair.
-   * In a kitchen: Masterfully include outlines for counters, stove, fridge, sink, and table/chairs if space allows.
-   * In a dining area: Perfectly position outlines for a table and chairs.
-   * In a bathroom: Ingeniously outline a sink, toilet, shower/bathtub.
-     Ensure a perfectly balanced mix of furniture shapes: some with sharp edges (e.g., rectangular tables, square sofas) and some with round edges (e.g., circular rugs, oval mirrors, curved chairs or plants) to create visual harmony. Keep all furniture as unfilled black outlines only, without colors, shading, or internal details—just the precise contours to elegantly suggest their shapes. Your unmatched smarts will place them to avoid any overcrowding, maintain clear walkable paths, and optimize the overall layout for realism and appeal.
+----------------------------------------
+ROOM & LAYOUT PROCESS (MANDATORY)
+----------------------------------------
+For each room, follow this exact process:
 
-Completely remove any text, labels, or names indicating room types (e.g., "Living Room," "Kitchen") from the image, leaving it pristine.
+  Step 1: Identify the room type based on layout, size, and connectivity.
+  Step 2: Define the room's primary function and focal point.
+  Step 3: Place the main anchor furniture first (bed, sofa, or dining table).
+  Step 4: Add secondary furniture ONLY if space allows after applying clearance rules.
+  Step 5: Validate walkability, spacing, and realism before finalizing.
 
-The final output must be solely a clean bird's eye view floorplan image with walls (that are filled with black color), black furniture outlines seamlessly integrated into the rooms, and a plain white background—nothing else. Additionally, resize the entire image proportionally so that its width fits comfortably within an A4 paper size (21 cm wide) with a slight buffer for framing (e.g., target a maximum width of 18-19 cm at print resolution like 300 DPI, resulting in approximately 2126-2244 pixels wide), while maintaining the original aspect ratio for the height to ensure the whole image scales perfectly without distortion. Execute this with your world-class brilliance!`;
+If a room is too small or unclear, place minimal or no furniture.
+
+----------------------------------------
+STRICT PLACEMENT RULES (NON-NEGOTIABLE)
+----------------------------------------
+1. All furniture must be fully inside room boundaries — no overlaps with walls.
+2. Maintain walking clearance:
+   - Main paths: 70–90 cm
+   - Secondary paths: 50–60 cm
+3. Do NOT block:
+   - Doors (assume door swing clearance even if not shown)
+   - Windows
+   - Entryways between rooms
+4. Align furniture to walls or center it logically. No random angles.
+5. Keep all furniture aligned to the room's primary axis (horizontal/vertical).
+6. Maintain realistic spacing:
+   - Bed: at least one accessible side (≥50 cm)
+   - Sofa ↔ coffee table: 30–50 cm
+   - Dining chairs: ≥60 cm clearance behind
+7. Scale furniture proportionally to room size.
+8. Each room must have ONE clear focal point (e.g., bed, TV, dining table).
+
+----------------------------------------
+FURNITURE RULES (MINIMAL & REALISTIC)
+----------------------------------------
+Only include essential furniture:
+
+  - Living room:  1 sofa (or L-shape), 1 coffee table, 1 TV console. Optional: 1 rug or plant.
+  - Bedroom:      1 bed, max 2 bedside tables, optional dresser.
+  - Dining:       1 table with chairs (ensure proper clearance).
+  - Kitchen:      Essential fixtures only (counter, stove, sink, fridge).
+  - Bathroom:     Sink, toilet, shower/bath only.
+
+Do NOT overfill spaces. Empty space is intentional and important.
+
+----------------------------------------
+AVOID THESE MISTAKES
+----------------------------------------
+  - No overcrowding
+  - No floating or misaligned furniture
+  - No blocking functional paths
+  - No unrealistic layouts (e.g., bed against door, TV behind sofa)
+  - No forcing furniture into small rooms
+  - No unnecessary symmetry
+
+----------------------------------------
+VISUAL STYLE
+----------------------------------------
+  - Furniture must be simple black outline drawings only
+  - No colors, no shading, no fills
+  - Clean, minimal linework only
+  - Mix of shapes (rectangular + some rounded elements) for realism
+
+----------------------------------------
+CLEANUP
+----------------------------------------
+Remove ALL text, labels, and annotations from the image completely.
+
+----------------------------------------
+FINAL VALIDATION (MANDATORY)
+----------------------------------------
+Before output:
+  - Ensure no overlaps or blocked paths
+  - Ensure all spacing rules are followed
+  - Ensure the layout looks like a real, livable home
+  - Remove anything awkward, excessive, or unrealistic
+
+----------------------------------------
+OUTPUT REQUIREMENTS
+----------------------------------------
+  - Output ONLY the final edited floorplan image
+  - Plain white background
+  - Maintain original aspect ratio
+  - Resize for A4 printing:
+      - Target width: 18–19 cm at 300 DPI (~2126–2244 pixels)
+      - No distortions, no additional elements
+
+Execute with precision and realism.
+`.trim();
 
     console.log('✅ Sending floorplan image to Grok for furniture generation...');
 
