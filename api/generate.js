@@ -55,19 +55,40 @@ STEP-BY-STEP ROOM PROCESS
 For EACH room:
   1. Identify room type from its shape, size, and position in the floorplan.
   2. Check all door positions — furniture must never block any door or its swing path.
-  3. Place ONLY the anchor piece first (bed / sofa / dining table).
+  3. Place the main anchor furniture first (bed, sofa, or dining table).
   4. Add secondary items ONLY if there is clear space remaining.
-  5. If the room is small or ambiguous, add minimal or no furniture.
+  5. If the room is too small or unclear, add minimal or no furniture.
 
 ========================================
-EXACT FURNITURE LIMITS PER ROOM TYPE
+STRICT PLACEMENT RULES (NON-NEGOTIABLE)
+========================================
+1. All furniture must be fully inside room boundaries — no overlaps with walls.
+2. Maintain walking clearance:
+   - Main paths: 70–90 cm
+   - Secondary paths: 50–60 cm
+3. Do NOT block:
+   - Doors (assume door swing clearance even if not shown)
+   - Windows
+   - Entryways between rooms
+4. Align furniture to walls or center it logically. No random angles.
+5. Keep all furniture aligned to the room's primary axis (horizontal/vertical).
+6. Maintain realistic spacing:
+   - Bed: at least one accessible side (≥50 cm)
+   - Sofa ↔ coffee table: 30–50 cm
+   - Dining chairs: ≥60 cm clearance behind
+7. Scale furniture proportionally to room size.
+8. Each room must have ONE clear focal point (e.g., bed, TV, dining table).
+
+========================================
+FURNITURE RULES (MINIMAL & REALISTIC)
 ========================================
 
-LIVING ROOM:
-  - Exactly 1 sofa or L-shaped sofa
-  - Exactly 1 coffee table
-  - Exactly 1 TV console (placed against a wall, opposite the sofa)
-  - Optional: 1 small side table or plant (only if space allows)
+LIVING ROOM (READ CAREFULLY — SPATIAL LOGIC IS MANDATORY):
+  - Step 1: Place the sofa against one wall. The sofa faces AWAY from that wall, toward the centre of the room.
+  - Step 2: Place the TV console flat against the wall directly in front of the sofa — this is the wall the sofa is FACING. The sofa and TV must be on opposite walls, facing each other.
+  - Step 3: Place the coffee table in the open space between the sofa and the TV console, centred on both.
+  - The sofa must NEVER face a blank wall with no TV. The TV must NEVER be beside or behind the sofa.
+  - Optional: 1 small side table or plant at the side of the sofa only if space allows.
 
 BEDROOM:
   - Exactly 1 bed
@@ -133,6 +154,8 @@ Verify each of the following before rendering:
   [ ] No new doors, windows, or walls were added
   [ ] No door or window is blocked by furniture
   [ ] Every bathroom has exactly 1 sink, 1 toilet, 1 shower or bath
+  [ ] The sofa and TV console are on OPPOSITE walls, facing each other
+  [ ] The coffee table is between the sofa and TV, not beside them
   [ ] No room is overcrowded
   [ ] All furniture is fully inside room boundaries
   [ ] All text and labels are removed
