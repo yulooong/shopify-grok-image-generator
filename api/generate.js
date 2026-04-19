@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "aurora",           // ✅ Correct model name
+        model: "grok-imagine-image",           // ✅ Correct model name
         prompt: finalPrompt,
         n: 1
       })
