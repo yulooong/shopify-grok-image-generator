@@ -43,8 +43,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "aurora",           // ✅ Correct model name
         prompt: finalPrompt,
-        n: 1,
-        size: "1024x1024"
+        n: 1
       })
     });
 
