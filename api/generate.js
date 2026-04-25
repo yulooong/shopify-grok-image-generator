@@ -28,8 +28,6 @@ export default async function handler(req, res) {
     }
 
     const finalPrompt = `
-Here's the revised prompt with that change:
-
 You are an expert architectural drafter. Your ONLY job is to add furniture outlines to an existing floorplan image.
 ========================================
 RULE 0 — ABSOLUTE STRUCTURAL PRESERVATION (MOST IMPORTANT)
@@ -63,25 +61,32 @@ Apply fine, parallel horizontal grain lines across all floor surfaces
 Grain lines should be subtle — slightly darker than the base floor color
 Vary grain direction slightly between rooms to suggest individual wood panels
 
-DEPTH & REALISM:
+DEPTH & REALISM — 3D EFFECT APPLIES TO WALLS ONLY:
 
 Walls ONLY must cast a faint drop shadow (soft, rightward and downward) to simulate physical raised dividers
 The entire floorplan model should cast a soft drop shadow on the background, as if physically resting on a surface
 Background: off-white or light warm grey — NOT pure white — to simulate a photography surface
-Furniture has NO shadow, NO depth, NO emboss, NO raised effect of any kind — it is purely a flat surface engraving
+
+FURNITURE — ABSOLUTELY NO 3D EFFECT (CRITICAL):
+
+Furniture has ZERO shadow of any kind — not drop shadow, not cast shadow, not contact shadow, not ambient shadow
+Furniture has ZERO depth, ZERO emboss, ZERO bevel, ZERO extrusion, ZERO raised effect
+Furniture lines do NOT interact with the lighting model in any way
+Furniture is NOT an object sitting on the floor — it is a mark burned INTO the floor surface
+Treat every furniture outline exactly like a laser burn or CNC engraving: it is a groove in the wood, flush with the surface, with no physical presence above the floor
+If you are about to add any shadow, lift, or depth to a furniture item — STOP and remove it entirely
 
 LIGHTING:
 
-Simulate soft overhead studio lighting
+Simulate soft overhead studio lighting on walls only
 Walls appear slightly lighter on their top edge and slightly darker on their side face to reinforce the 3D raised effect
-Furniture lines are NOT affected by lighting — they are recessed engravings into the flat floor surface
+Furniture lines are completely unaffected by any lighting — they are recessed grooves, not objects
 
 FURNITURE STYLE:
 
 All furniture rendered as laser-engraved outlines only — thin, clean, flat dark lines scored into the wood surface
-The lines sit flush with the floor — no shadow, no lift, no emboss, no 3D effect whatsoever
-No fills, no shading, no colours on furniture
-Think of furniture as CNC-engraved vector lines: precise, flat, and part of the floor panel itself
+No fills, no shading, no colours, no shadows, no gradients on or around any furniture
+The floor beneath and around furniture is identical to the floor everywhere else — no darkening, no highlighting, no halo
 
 ========================================
 STEP-BY-STEP ROOM PROCESS
@@ -196,9 +201,10 @@ Verify each of the following before rendering:
 [ ] No room is overcrowded
 [ ] All furniture is fully inside room boundaries
 [ ] All text and labels are removed
-[ ] Walls have a 3D raised effect with shadows — furniture does NOT
-[ ] Furniture appears as flat laser-engraved lines with zero depth or shadow
-[ ] Wood grain, wall depth, and engraved furniture lines are all present
+[ ] Walls have a 3D raised effect with shadows
+[ ] Furniture has ZERO shadow, ZERO depth, ZERO 3D effect of any kind — scan every furniture item individually and confirm
+[ ] The floor surface around and beneath all furniture is identical in tone to the rest of the floor — no darkening, no glow, no halo
+[ ] Furniture looks like laser engravings burned into the wood, not objects placed on top of it
 [ ] Layout looks like a real, livable home
 `.trim();
 
