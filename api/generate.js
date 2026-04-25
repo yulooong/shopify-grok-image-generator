@@ -5,22 +5,25 @@ import fs from 'fs';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
-// ─── Step 1: Scan the frame PNG and find the red rectangle bounds ───────────
-async function findAndEraseRedRect(frameBuffer) {
-  const { data, info } = await sharp(frameBuffer)
+// ── Detect red rectangle, cut a hole in the frame, composite naturally ───────
+async function buildComposite(frameBuffer, floorplanBuffer) {
+
+  // 1. Get frame pixel data
+  const { data: frameData, info } = await sharp(frameBuffer)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const { width, height } = info;
-  const ch = 4; // RGBA
-  let minX = width, minY = height, maxX = 0, maxY = 0, found = false;
+  const { width: frameW, height: frameH } = info;
+  const ch = 4;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * ch;
-      const r = data[i], g = data[i + 1], b = data[i + 2];
-      // Detect vivid red pixels (the rectangle outline)
+  // 2. Find the red rectangle bounds
+  let minX = frameW, minY = frameH, maxX = 0, maxY = 0, found = false;
+
+  for (let y = 0; y < frameH; y++) {
+    for (let x = 0; x < frameW; x++) {
+      const i = (y * frameW + x) * ch;
+      const r = frameData[i], g = frameData[i + 1], b = frameData[i + 2];
       if (r > 180 && g < 80 && b < 80) {
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
@@ -33,72 +36,74 @@ async function findAndEraseRedRect(frameBuffer) {
 
   if (!found) throw new Error('Red rectangle not found in frame image');
 
-  const rect = { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
+  // Expand rect by 2px inward so the mat edge cleanly overlaps
+  const rect = {
+    left:   minX + 2,
+    top:    minY + 2,
+    width:  (maxX - minX) - 4,
+    height: (maxY - minY) - 4,
+  };
+
   console.log('✅ Red rectangle detected:', rect);
 
-  // Erase the red outline by painting warm-white over the full detected area
-  // (slightly expand by 3px to ensure no red bleeds through)
-  const eraseW = rect.width + 6;
-  const eraseH = rect.height + 6;
+  // 3. Cut a transparent hole in the frame at the rect position
+  //    (this lets the floorplan show through from behind)
+  for (let y = rect.top; y < rect.top + rect.height; y++) {
+    for (let x = rect.left; x < rect.left + rect.width; x++) {
+      const i = (y * frameW + x) * ch;
+      frameData[i + 3] = 0; // make fully transparent
+    }
+  }
 
-  const whitePatch = await sharp({
-    create: {
-      width: eraseW,
-      height: eraseH,
-      channels: 4,
-      background: { r: 243, g: 241, b: 239, alpha: 1 }, // matches frame mat colour
-    },
+  const frameWithHole = await sharp(Buffer.from(frameData), {
+    raw: { width: frameW, height: frameH, channels: 4 },
   }).png().toBuffer();
 
-  const cleanedFrame = await sharp(frameBuffer)
-    .composite([{ input: whitePatch, left: rect.left - 3, top: rect.top - 3 }])
+  // 4. Resize floorplan to fill the hole exactly
+  const resizedFloorplan = await sharp(floorplanBuffer)
+    .resize(rect.width, rect.height, { fit: 'cover', position: 'centre' })
     .png()
     .toBuffer();
 
-  return { cleanedFrame, rect };
-}
+  // 5. Build inner shadow overlay — makes the floorplan look recessed into the frame
+  const shadowSize = 22;
+  const shadowData = Buffer.alloc(rect.width * rect.height * 4, 0);
 
-// ─── Step 2: Composite floorplan into frame naturally ───────────────────────
-async function buildFinalImage(cleanedFrame, floorplanBuffer, rect) {
-  // Resize floorplan to exactly fill the detected rectangle
-  const resized = await sharp(floorplanBuffer)
-    .resize(rect.width, rect.height, { fit: 'cover', position: 'centre' })
-    .toBuffer();
+  for (let y = 0; y < rect.height; y++) {
+    for (let x = 0; x < rect.width; x++) {
+      const i = (y * rect.width + x) * 4;
+      const dist = Math.min(x, y, rect.width - 1 - x, rect.height - 1 - y);
+      if (dist < shadowSize) {
+        const strength = Math.pow(1 - dist / shadowSize, 1.6);
+        shadowData[i]     = 20;  // R (dark warm shadow)
+        shadowData[i + 1] = 15;  // G
+        shadowData[i + 2] = 10;  // B
+        shadowData[i + 3] = Math.round(strength * 160); // alpha max ~160
+      }
+    }
+  }
 
-  // Add a very subtle dark inner-shadow edge so the floorplan looks
-  // recessed into the frame (realistic mat-opening effect)
-  const shadowOverlay = await sharp({
+  const innerShadow = await sharp(shadowData, {
+    raw: { width: rect.width, height: rect.height, channels: 4 },
+  }).png().toBuffer();
+
+  // 6. Composite layers (bottom to top):
+  //    [white background] → [floorplan] → [inner shadow] → [frame with hole]
+  const result = await sharp({
     create: {
-      width: rect.width,
-      height: rect.height,
+      width: frameW,
+      height: frameH,
       channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
+      background: { r: 248, g: 246, b: 243, alpha: 1 }, // warm white matches mat
     },
   })
-    .png()
-    .toBuffer();
-
-  // Composite: floorplan into frame, then a soft vignette on top
-  const result = await sharp(cleanedFrame)
     .composite([
-      // 1. The floorplan fills the rectangle exactly
-      { input: resized, left: rect.left, top: rect.top, blend: 'over' },
-      // 2. Thin dark border around the floorplan for depth
-      {
-        input: await sharp({
-          create: {
-            width: rect.width,
-            height: rect.height,
-            channels: 4,
-            background: { r: 0, g: 0, b: 0, alpha: 0 },
-          },
-        })
-          .png()
-          .toBuffer(),
-        left: rect.left,
-        top: rect.top,
-        blend: 'multiply',
-      },
+      // Layer 1: floorplan sits in the hole position
+      { input: resizedFloorplan, left: rect.left, top: rect.top, blend: 'over' },
+      // Layer 2: inner shadow on top of floorplan — creates depth/recession illusion
+      { input: innerShadow, left: rect.left, top: rect.top, blend: 'over' },
+      // Layer 3: frame WITH hole sits on top — mat board naturally overlaps floorplan edges
+      { input: frameWithHole, left: 0, top: 0, blend: 'over' },
     ])
     .png()
     .toBuffer();
@@ -114,7 +119,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!process.env.XAI_API_KEY)
-    return res.status(500).json({ error: 'Server misconfiguration: API key missing' });
+    return res.status(500).json({ error: 'API key missing' });
 
   try {
     const { image: imageDataUri } = req.body || {};
@@ -138,7 +143,7 @@ Furniture outlines: laser-engraved into the wood surface — thin dark brown lin
 Walls ONLY must cast a faint drop shadow to simulate physical raised dividers.
 Furniture has ZERO shadow, ZERO depth, ZERO 3D effect of any kind.
 Furniture looks like laser engravings burned into the wood, not objects placed on top of it.
-Background: off-white or light warm grey — NOT pure white.
+CRITICAL: The background MUST be a plain warm off-white (#F5F2EE) with NO gradients, NO blue, NO grey tones, NO shadows on the background itself.
 ========================================
 FURNITURE RULES
 LIVING ROOM: Sofa against one wall facing the TV console on the opposite wall. Coffee table centred between them.
@@ -185,23 +190,22 @@ Preserve the original image's aspect ratio exactly.
 
     const generatedUrl = grokData.data?.[0]?.url;
     if (!generatedUrl)
-      return res.status(500).json({ error: 'No image URL returned from Grok', detail: grokData });
+      return res.status(500).json({ error: 'No image URL from Grok', detail: grokData });
 
-    // ── 2. Download the generated floorplan ──────────────────────────────────
+    // ── 2. Download generated floorplan ───────────────────────────────────────
     const floorplanResp = await fetch(generatedUrl);
     if (!floorplanResp.ok)
-      return res.status(500).json({ error: 'Failed to download generated floorplan' });
+      return res.status(500).json({ error: 'Failed to download floorplan' });
     const floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
 
     // ── 3. Load frame template ────────────────────────────────────────────────
     const framePath = path.join(process.cwd(), 'public', 'Clean_Hausframe_Template.png');
     const frameBuffer = fs.readFileSync(framePath);
 
-    // ── 4. Auto-detect red rect, erase it, composite floorplan ───────────────
-    const { cleanedFrame, rect } = await findAndEraseRedRect(frameBuffer);
-    const finalImage = await buildFinalImage(cleanedFrame, floorplanBuffer, rect);
+    // ── 4. Build composite ────────────────────────────────────────────────────
+    const finalImage = await buildComposite(frameBuffer, floorplanBuffer);
 
-    // ── 5. Return as base64 ───────────────────────────────────────────────────
+    // ── 5. Return base64 ──────────────────────────────────────────────────────
     const base64 = finalImage.toString('base64');
     res.status(200).json({ success: true, imageUrl: `data:image/png;base64,${base64}` });
 
