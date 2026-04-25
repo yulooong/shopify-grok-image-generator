@@ -1,31 +1,33 @@
 // api/generate.js
+import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
+
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
+// Red rectangle coordinates inside Clean_Hausframe_Template.png
+const FRAME = {
+  left: 140,
+  top: 360,
+  width: 690,
+  height: 485,
+};
+
 export default async function handler(req, res) {
-  // === CORS HEADERS (allows Shopify to call this) ===
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   if (!process.env.XAI_API_KEY) {
-    console.error('❌ XAI_API_KEY is not set in Vercel environment variables');
     return res.status(500).json({ error: 'Server misconfiguration: API key missing' });
   }
 
   try {
     const { image: imageDataUri } = req.body || {};
-
-    if (!imageDataUri) {
-      return res.status(400).json({ error: 'No image provided in request body' });
-    }
+    if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
 You are an expert architectural drafter. Your ONLY job is to add furniture outlines to an existing floorplan image.
@@ -103,113 +105,67 @@ STRICT PLACEMENT RULES (NON-NEGOTIABLE)
 
 All furniture must be fully inside room boundaries — no overlaps with walls.
 Maintain walking clearance:
-
 Main paths: 70–90 cm
 Secondary paths: 50–60 cm
 
-
 Do NOT block:
-
 Doors (assume door swing clearance even if not shown)
 Windows
 Entryways between rooms
 
-
 Align furniture to walls or center it logically. No random angles.
 Keep all furniture aligned to the room's primary axis (horizontal/vertical).
 Maintain realistic spacing:
-
-Bed: at least one accessible side (≥50 cm)
-Sofa ↔ coffee table: 30–50 cm
-Dining chairs: ≥60 cm clearance behind
-
+Bed: at least one accessible side (>=50 cm)
+Sofa to coffee table: 30–50 cm
+Dining chairs: >=60 cm clearance behind
 
 Scale furniture proportionally to room size.
 Each room must have ONE clear focal point (e.g., bed, TV, dining table).
 
 ========================================
-FURNITURE RULES (MINIMAL & REALISTIC)
-LIVING ROOM (READ CAREFULLY — SPATIAL LOGIC IS MANDATORY):
-
-Step 1: Place the sofa against one wall. The sofa faces AWAY from that wall, toward the centre of the room.
-Step 2: Place the TV console flat against the wall directly in front of the sofa — this is the wall the sofa is FACING. The sofa and TV must be on opposite walls, facing each other.
-Step 3: Place the coffee table in the open space between the sofa and the TV console, centred on both.
-The sofa must NEVER face a blank wall with no TV. The TV must NEVER be beside or behind the sofa.
-Optional: 1 small side table or plant at the side of the sofa only if space allows.
+FURNITURE RULES (MINIMAL AND REALISTIC)
+LIVING ROOM:
+Step 1: Place the sofa against one wall. The sofa faces AWAY from that wall, toward the centre.
+Step 2: Place the TV console flat against the wall directly in front of the sofa.
+Step 3: Place the coffee table in the open space between the sofa and the TV console.
+The sofa and TV must be on OPPOSITE walls, facing each other.
 
 BEDROOM:
-
 Exactly 1 bed
-Maximum 1–2 bedside tables (only if space allows beside the bed)
-Optional: 1 dresser against a wall (only in larger bedrooms)
+Maximum 1–2 bedside tables only if space allows
+Optional: 1 dresser against a wall only in larger bedrooms
 
-DINING ROOM / DINING AREA:
-
+DINING ROOM:
 Exactly 1 dining table
 Chairs placed only around the table (2–6 chairs depending on table size)
 
 KITCHEN:
-
 Trace and preserve existing counter/fixture shapes only
 Add: 1 stove symbol, 1 fridge symbol, 1 sink symbol — all along walls
-Do NOT add a dining table inside the kitchen unless there is clear open space
 
-BATHROOM (CRITICAL — READ CAREFULLY):
-
+BATHROOM (CRITICAL):
 Exactly 1 toilet
 Exactly 1 sink (never 2, never 0)
 Exactly 1 shower OR 1 bathtub — NOT both, unless the room is clearly large enough for both
-Do not add any other items
 
-SMALL ROOMS / UNCLEAR ROOMS:
-
+SMALL ROOMS:
 If the room purpose is unclear or the space is tight: add nothing
-Never force furniture into a room that does not have enough space
-
-========================================
-SPACING & CLEARANCE RULES
-
-Minimum 80 cm clearance on all main walking paths
-Minimum 50 cm clearance on secondary paths (e.g., beside a bed)
-Sofa to coffee table gap: 35–45 cm
-Dining chairs need ≥60 cm pull-out space behind them
-No furniture within 60 cm of any door opening
 
 ========================================
 CLEANUP
-
 Remove ALL existing text, room labels, dimension lines, and annotations
 Keep only: walls, doors, windows, stairs, and the new furniture outlines
 
 ========================================
 OUTPUT REQUIREMENTS
-
 Output the final image ONLY — no text, no commentary
-Hyper-realistic wooden scale model appearance (see VISUAL STYLE section above)
+Hyper-realistic wooden scale model appearance
 Preserve the original image's aspect ratio exactly
-Target width: 2126–2244 pixels (18–19 cm at 300 DPI) for A4 printing
 No distortions
-
-========================================
-FINAL CHECK BEFORE OUTPUT
-Verify each of the following before rendering:
-[ ] No new doors, windows, or walls were added
-[ ] No door or window is blocked by furniture
-[ ] Every bathroom has exactly 1 sink, 1 toilet, 1 shower or bath
-[ ] The sofa and TV console are on OPPOSITE walls, facing each other
-[ ] The coffee table is between the sofa and TV, not beside them
-[ ] No room is overcrowded
-[ ] All furniture is fully inside room boundaries
-[ ] All text and labels are removed
-[ ] Walls have a 3D raised effect with shadows
-[ ] Furniture has ZERO shadow, ZERO depth, ZERO 3D effect of any kind — scan every furniture item individually and confirm
-[ ] The floor surface around and beneath all furniture is identical in tone to the rest of the floor — no darkening, no glow, no halo
-[ ] Furniture looks like laser engravings burned into the wood, not objects placed on top of it
-[ ] Layout looks like a real, livable home
 `.trim();
 
-    console.log('✅ Sending floorplan image to Grok...');
-
+    // 1. Call Grok to generate the floorplan
     const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
       method: 'POST',
       headers: {
@@ -219,36 +175,55 @@ Verify each of the following before rendering:
       body: JSON.stringify({
         model: "grok-imagine-image",
         prompt: finalPrompt,
-        image: {
-          url: imageDataUri,
-          type: "image_url"
-        }
+        image: { url: imageDataUri, type: "image_url" }
       })
     });
 
-    const data = await grokResponse.json();
-
-    console.log('Grok response status:', grokResponse.status);
-    console.log('Grok response body:', JSON.stringify(data));
+    const grokData = await grokResponse.json();
 
     if (!grokResponse.ok) {
-      console.error('❌ Grok API error:', data);
-      return res.status(500).json({
-        error: data.error?.message || 'Grok API returned an error',
-        detail: data
-      });
+      return res.status(500).json({ error: grokData.error?.message || 'Grok API error', detail: grokData });
     }
 
-    const generatedUrl = data.data?.[0]?.url;
-
+    const generatedUrl = grokData.data?.[0]?.url;
     if (!generatedUrl) {
-      return res.status(500).json({ error: 'No image URL returned from Grok', detail: data });
+      return res.status(500).json({ error: 'No image URL returned from Grok', detail: grokData });
     }
 
-    res.status(200).json({ success: true, imageUrl: generatedUrl });
+    // 2. Download the generated floorplan image
+    const floorplanResponse = await fetch(generatedUrl);
+    if (!floorplanResponse.ok) {
+      return res.status(500).json({ error: 'Failed to download generated floorplan' });
+    }
+    const floorplanBuffer = Buffer.from(await floorplanResponse.arrayBuffer());
+
+    // 3. Load the frame template from disk
+    const framePath = path.join(process.cwd(), 'public', 'Clean_Hausframe_Template.png');
+    const frameBuffer = fs.readFileSync(framePath);
+
+    // 4. Resize the floorplan to fit exactly inside the red rectangle
+    const resizedFloorplan = await sharp(floorplanBuffer)
+      .resize(FRAME.width, FRAME.height, { fit: 'cover' })
+      .toBuffer();
+
+    // 5. Composite: paste the floorplan INTO the frame at the red rectangle position
+    const composited = await sharp(frameBuffer)
+      .composite([{
+        input: resizedFloorplan,
+        left: FRAME.left,
+        top: FRAME.top,
+      }])
+      .png()
+      .toBuffer();
+
+    // 6. Return as base64 data URI
+    const base64 = composited.toString('base64');
+    const dataUri = `data:image/png;base64,${base64}`;
+
+    res.status(200).json({ success: true, imageUrl: dataUri });
 
   } catch (error) {
-    console.error('❌ Backend crash:', error);
+    console.error('Backend crash:', error);
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
 }
