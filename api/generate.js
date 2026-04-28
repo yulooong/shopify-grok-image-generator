@@ -6,7 +6,8 @@ export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 // Returns the wooden floorplan with transparent background
 async function buildTransparentFloorplan(floorplanBuffer) {
   return await sharp(floorplanBuffer)
-    .ensureAlpha()                    // Make sure we have an alpha channel
+    .ensureAlpha()
+    .trim({ threshold: 15 })           // Fixed: now using object format
     .png({ 
       quality: 95, 
       compressionLevel: 9,
@@ -38,22 +39,21 @@ Never alter walls, doors, windows, staircases, or room boundaries. Only furnitur
 
 WOODEN MODEL STYLE (top-down view):
 - Floor: warm amber/honey wood (#D4A96A), fine horizontal grain lines
-- Walls: dark walnut brown (#5C3317), slightly raised 3D effect with faint drop shadow
-- Furniture: laser-engraved outlines only — thin dark lines (#3D1F0A), no shadow, no 3D depth
+- Walls: dark walnut brown (#5C3317), slightly raised with faint drop shadow
+- Furniture: laser-engraved thin dark lines (#3D1F0A), no extra shadow or depth
 
-BACKGROUND REQUIREMENTS (VERY IMPORTANT):
-- The area outside the floorplan must be pure white (#FFFFFF) or very close to it.
-- Do NOT add any vignette, gradient, shadow, or texture on the background.
-- Preserve exact aspect ratio of the original floorplan.
+BACKGROUND REQUIREMENTS (CRITICAL):
+- The area outside the actual floorplan must be pure solid white (#FFFFFF).
+- No gradients, no vignette, no shadows, no texture on the background.
 
 CLEANUP:
 - Remove all text, labels, dimensions, and measurements.
-- Output only the wooden-style floorplan.
+- Keep only the wooden floorplan elements.
 
-OUTPUT: Clean image with the wooden floorplan on a solid white background. No extra elements.
+OUTPUT: Clean wooden-style floorplan on a solid white background. Preserve aspect ratio.
 `.trim();
 
-    // ── Call Grok ─────────────────────────────────────────────────────────────
+    // Call Grok Image Generation
     const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
       method: 'POST',
       headers: {
@@ -75,28 +75,15 @@ OUTPUT: Clean image with the wooden floorplan on a solid white background. No ex
     if (!generatedUrl)
       return res.status(500).json({ error: 'No image URL from Grok', detail: grokData });
 
-    // Download the generated floorplan
+    // Download generated image
     const floorplanResp = await fetch(generatedUrl);
     if (!floorplanResp.ok)
       return res.status(500).json({ error: 'Failed to download floorplan' });
 
-    let floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
+    const floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
 
-    // ── Make background transparent ───────────────────────────────────────────
-    // This removes the white/off-white background and keeps only the wooden elements
-    const transparentBuffer = await sharp(floorplanBuffer)
-      .ensureAlpha()
-      .trim(10)                    // Trim edges (tolerance of 10)
-      .png({ 
-        quality: 95, 
-        compressionLevel: 9 
-      })
-      .toBuffer();
-
-    // Optional: You can add a small padding back if you want some breathing room
-    // .extend({ top: 20, bottom: 20, left: 20, right: 20, background: { r: 255, g: 255, b: 255, alpha: 0 } })
-
-    const finalImage = transparentBuffer;
+    // Convert background to transparent
+    const finalImage = await buildTransparentFloorplan(floorplanBuffer);
 
     res.status(200).json({
       success: true,
