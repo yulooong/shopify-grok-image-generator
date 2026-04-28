@@ -32,163 +32,41 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-You are the world's BEST architectural drafter AND ELITE interior designer, specializing in highly functional layouts and premium wooden architectural models.
+TASK: Generate a top-down architectural model photograph based on the uploaded floorplan.
 
-Your role is to DESIGN within the given structure — NOT to change it.
+CORE STYLE: HYBRID WOODEN MODEL
 
-Task: Add furniture to the uploaded floorplan using intelligent, realistic, and highly functional placement.
+BASE: A single flat sheet of light-grained natural wood (#E6C79C).
 
-------------------------------------------------------------------
-🚫 STRUCTURE IS ABSOLUTELY IMMUTABLE (HIGHEST PRIORITY)
-------------------------------------------------------------------
-- You are FORBIDDEN from modifying the structure in ANY way.
-- DO NOT remove, shift, resize, redraw, simplify, or reinterpret ANY walls.
-- DO NOT “clean up” or “optimize” the layout by altering structure.
-- DO NOT block or replace walls with furniture.
+WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Render them as raised, physical wooden strips (#D8B58A). They must have visible thickness, a subtle top bevel, and cast a short, soft shadow to the bottom-right.
 
-The uploaded floorplan walls are FINAL and UNTOUCHABLE.
-If any wall is changed, missing, thinner, thicker, moved, or simplified → OUTPUT IS WRONG.
+FURNITURE (STRICTLY 2D): All interior items must be FLAT 2D dark brown engraved lines (#4A2E1A) burnt into the wood base.
 
-------------------------------------------------------------------
-🧱 WALLS (STRONG 3D EFFECT - ONLY 3D ELEMENT)
-------------------------------------------------------------------
-Walls must clearly look like raised wooden pieces (laser-cut blocks placed on a board):
-- Color: slightly darker wood (#D8B58A)
-- Uniform thickness EXACTLY matching the original floorplan
-- Clearly elevated above the floor (noticeable height)
+CRITICAL: Furniture must have ZERO height, ZERO thickness, and cast NO shadows. It must look like a 2D drawing on the floor.
 
-3D requirements:
-- Visible vertical edge (not flat)
-- Stronger, but still realistic depth
-- Clean top edges with subtle bevel
+LOGICAL FURNISHING RULES:
 
-Shadow requirements:
-- Light source from top-left
-- Shadows must be:
-  - Clearly visible (stronger than before)
-  - Still soft-edged (not harsh)
-  - Short to medium length (not overly long)
-- Shadow must be consistent across ALL walls
+LIVING ROOM: Place a 2D-engraved TV flush against a solid wall. Place a 2D-engraved sofa directly parallel to and facing the TV. A 2D coffee table sits between them.
 
-👉 Walls should look like physical wooden strips placed on top of the board.
+KITCHEN: 2D-engraved countertops, sink, and stove must be flat against the floor. No 3D extrusion on counters.
 
-------------------------------------------------------------------
-🪵 FLOOR
-------------------------------------------------------------------
-- Light natural wood (#E6C79C)
-- Very subtle grain
-- Flat and even lighting
+BATHROOM: Must include 2D-engraved toilet, sink, and a clear rectangular shower enclosure area.
 
-------------------------------------------------------------------
-✏️ FURNITURE (STRICTLY 2D ENGRAVED)
-------------------------------------------------------------------
-Furniture must look like laser-engraved lines on the wood surface:
-- Color: dark brown (#4A2E1A)
-- Thin, crisp, uniform stroke
-- NO fill
-- NO shading
-- NO gradients
-- NO shadows
-- NO bevel
-- NO emboss
-- NO depth
+DINING: If space allows, a centered 2D-engraved table with symmetrical 2D chairs.
 
-🚫 If furniture looks like objects instead of engraved lines → WRONG
+BEDROOM: 2D-engraved bed with headboard flush against a wall.
 
-------------------------------------------------------------------
-🧠 DESIGN LOGIC (MANDATORY)
-------------------------------------------------------------------
-You are a PROFESSIONAL interior designer. Placement must be intentional.
+STRICT PROHIBITIONS (STOPS FAILURES):
 
-STEP 1: Identify room function  
-STEP 2: Define focal point  
-STEP 3: Plan walking paths  
-STEP 4: Place furniture logically  
+NO 3D FURNITURE: Do not extrude tables, chairs, or sofas. If it’s not a wall, it must be flat.
 
-🚫 CROSS-CONTAMINATION PROHIBITION: NEVER place furniture meant for one room type into another (e.g., NO sofas in kitchens or bathrooms, NO toilets in living rooms).
+NO WALL ALTERATIONS: Do not move, add, or delete any walls from the original image.
 
-------------------------------------------------------------------
-🏠 LIVING ROOM (STRICT)
-------------------------------------------------------------------
-- Identify a proper TV wall (solid wall, no doors/windows)
-- Place TV flush against that wall
-- Place sofa DIRECTLY facing the TV (must be aligned correctly, not sideways or angled wrongly)
-- Coffee table centered between sofa and TV
-- Maintain clear walking space
+NO SHADOWS ON FLOOR ITEMS: Only the raised walls cast shadows.
 
-🚫 INVALID:
-- Sofa not facing TV
-- TV floating
-- Random placement
+NO TEXT: No labels, dimensions, or room names.
 
-------------------------------------------------------------------
-🍽️ DINING AREA (REQUIRED WHEN SPACE EXISTS)
-------------------------------------------------------------------
-If there is open space near kitchen/living:
-- MUST include dining table
-- Table centered in its zone
-- Chairs evenly spaced and symmetrical
-- Ensure clearance for chairs
-
-🚫 INVALID:
-- Missing dining set when space clearly allows
-
-------------------------------------------------------------------
-🛏️ BEDROOMS
-------------------------------------------------------------------
-- Bed headboard against solid wall
-- Logical centering or placement
-- Max 2 bedside tables
-- Maintain walking clearance
-
-------------------------------------------------------------------
-🍳 KITCHEN
-------------------------------------------------------------------
-- Follow work triangle (sink, stove, fridge)
-- Align along walls
-
-------------------------------------------------------------------
-🚿 BATHROOM
-------------------------------------------------------------------
-- Max: toilet, sink, shower/bath
-- Maintain usable spacing
-
-------------------------------------------------------------------
-⚠️ HARD PROHIBITIONS
-------------------------------------------------------------------
-- DO NOT modify walls (ZERO tolerance)
-- DO NOT reduce or simplify wall geometry
-- DO NOT add 3D to furniture (must look burned/engraved flat onto the floor)
-- DO NOT add shadows to furniture
-- DO NOT randomly place items
-- DO NOT overcrowd
-
-------------------------------------------------------------------
-🎯 LIGHTING
-------------------------------------------------------------------
-- Clean studio lighting
-- Even illumination
-- ONLY walls cast shadows
-- Stronger but controlled shadow for clear 3D effect
-
-------------------------------------------------------------------
-✅ FINAL VALIDATION (MANDATORY)
-------------------------------------------------------------------
-Before output:
-
-STRUCTURE: Are ALL original walls perfectly preserved? If not → FIX
-WALLS: Do walls clearly look raised with visible depth? If not → INCREASE 3D effect
-LIVING ROOM: Sofa facing TV? If not → FIX
-DINING: Space exists but no dining table? → ADD IT
-FURNITURE: Completely flat engraved lines? If not → FIX
-
-------------------------------------------------------------------
-🧾 OUTPUT
-------------------------------------------------------------------
-- No text, labels, or dimensions
-- Pure white background (#FFFFFF)
-- Preserve original aspect ratio
-- Must look like a premium physical wooden architectural model
+FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D "wooden blocks" glued on, and the furniture is merely "inked" onto the surface. Pure white background.
 `.trim();
 
     // Call Grok Image Generation
