@@ -39,12 +39,16 @@ Task: Add furniture to the uploaded floorplan using precise, logical, and practi
 ------------------------------------------------------------------
 🔒 CORE VISUAL RULE (HIGHEST PRIORITY)
 ------------------------------------------------------------------
-This must look like a REAL laser-engraved wooden board:
-- Furniture is NOT physical objects.
-- Furniture must look like thin lines engraved (burned) into wood.
-- Absolutely NO visual depth for furniture.
+This must look like a REAL laser-cut wooden architectural model:
 
-If any furniture appears raised, shaded, filled, embossed, or 3D in any way, the output is WRONG.
+- Walls are physical raised elements (3D).
+- Furniture is NOT physical — it is engraved into the surface.
+
+STRICT SEPARATION:
+- Walls = 3D (slightly raised wooden pieces)
+- Furniture = 100% flat engraved lines
+
+If ANY furniture appears raised, shaded, filled, or 3D in any way, the output is WRONG.
 
 ------------------------------------------------------------------
 🎨 STYLE REQUIREMENTS (STRICT)
@@ -54,77 +58,86 @@ If any furniture appears raised, shaded, filled, embossed, or 3D in any way, the
 - Floor:
   - Light natural wood tone (#E6C79C)
   - Very subtle, uniform grain (barely visible)
-  - Flat lighting, no gradients, no hotspots
+  - Flat and evenly lit (no gradients, no hotspots)
 
-- Walls:
-  - Slightly darker wood tone (#D8B58A) (same hue family, low contrast)
-  - Uniform thickness throughout the entire floorplan
-  - Slight elevation ONLY via a very soft, short, consistent shadow
-  - Shadow direction must be consistent (top-left light source)
-  - No harsh or long shadows
+- Walls (ONLY ELEMENT WITH 3D EFFECT):
+  - Slightly darker wood tone (#D8B58A) (same hue family)
+  - Uniform thickness across entire floorplan
+  - Clearly raised above the floor (visible height)
+  - Clean vertical edges (like laser-cut wood pieces)
+  - Subtle bevel allowed ONLY on top edges
+  - Cast a soft, short, consistent shadow
 
-- Furniture (CRITICAL):
-  - Pure 2D engraved line style ONLY
-  - Color: dark brown (#4A2E1A)
+  Shadow rules:
+  - Single light source from top-left
+  - Shadows must be soft, tight, and minimal
+  - No long or dramatic shadows
+  - All walls must have consistent shadow direction and intensity
+
+- Furniture (CRITICAL - MUST REMAIN 2D):
+  - Pure engraved line style ONLY
+  - Dark brown lines (#4A2E1A)
   - Thin, crisp, uniform stroke weight
   - NO fill, NO shading, NO gradients
-  - NO bevel, NO emboss, NO shadow
+  - NO bevel, NO emboss
+  - NO shadows
   - NO thickness or depth
-  - Must look like vector line art etched into the wood
+  - Must look like laser-burned line art on wood
 
 - Doors, arcs, and symbols:
-  - Same thin stroke style as furniture
-  - Do NOT appear darker or thicker than furniture
+  - Same thin engraved line style as furniture
+  - No emphasis, no thickness difference
 
 ------------------------------------------------------------------
 🧠 FURNITURE PLACEMENT RULES (STRICT & FUNCTIONAL)
 ------------------------------------------------------------------
-- Ensure realistic, practical layouts with proper walking space.
+- Ensure realistic layouts with proper walking space.
 
 - Living room:
   - Sofa directly faces TV
-  - TV must be flush against a wall (not floating)
+  - TV must be placed flush against a wall (not floating)
   - Coffee table centered between sofa and TV
 
 - Bedroom:
   - Bed headboard against a solid wall
   - Centered where possible
   - Max 2 bedside tables
-  - Maintain clear walking space on sides
+  - Maintain walking clearance
 
 - Dining:
   - Table centered
-  - Chairs evenly and symmetrically spaced
+  - Chairs evenly and symmetrically arranged
 
 - Kitchen:
-  - Stove, sink, refrigerator follow work triangle logic
-  - Aligned cleanly along walls
+  - Stove, sink, refrigerator follow work triangle
+  - Clean alignment along walls
 
 - Bathroom:
   - Max: 1 toilet, 1 sink, 1 shower/bathtub
   - Maintain usable clearance
 
-- NEVER overcrowd any room
+- Never overcrowd spaces
 
 ------------------------------------------------------------------
 ⚠️ STRICT PROHIBITIONS
 ------------------------------------------------------------------
-- DO NOT modify walls, doors, or structure
-- DO NOT add textures, noise, or heavy grain
-- DO NOT use gradients anywhere
+- DO NOT modify structural elements
+- DO NOT apply any 3D effect to furniture
 - DO NOT add shadows to furniture
+- DO NOT use gradients anywhere
 - DO NOT vary line thickness randomly
-- DO NOT allow inconsistent wall thickness
-- DO NOT create uneven lighting
-- DO NOT let any object appear 3D except walls (very subtle only)
+- DO NOT create inconsistent wall thickness
+- DO NOT use dramatic lighting or deep shadows
+- DO NOT let furniture resemble physical objects
 
 ------------------------------------------------------------------
 🎯 LIGHTING & RENDER QUALITY
 ------------------------------------------------------------------
-- Clean studio lighting (like product photography)
-- Even illumination across entire floorplan
-- Only walls cast a very soft, minimal shadow
-- No vignetting, no dramatic lighting
+- Clean studio lighting (premium product render)
+- Even illumination across entire image
+- ONLY walls cast shadows
+- Shadows are soft, subtle, and consistent
+- No vignette, no uneven lighting
 
 ------------------------------------------------------------------
 🧾 OUTPUT REQUIREMENTS
@@ -132,19 +145,19 @@ If any furniture appears raised, shaded, filled, embossed, or 3D in any way, the
 - Remove ALL text, labels, dimensions, numbers
 - Background must be pure white (#FFFFFF)
 - Preserve exact original aspect ratio
-- Output must feel like a premium physical wooden model product photo
+- Output must resemble a high-end physical wooden model product
 
 ------------------------------------------------------------------
 ✅ FINAL QUALITY CHECK (MANDATORY)
 ------------------------------------------------------------------
-Before outputting, ensure:
-- Furniture looks like engraved lines, NOT objects
-- No shadows or fills exist on furniture
-- Wall thickness is 100% consistent
-- Shadows are soft, minimal, and consistent direction
-- Entire image feels clean, minimal, and uniform
+Before outputting, verify:
 
-If any of the above fails, regenerate internally until correct.
+- Walls are clearly raised with consistent 3D effect
+- Wall shadows are soft, short, and consistent direction
+- Furniture is completely flat (zero depth, zero shadow, zero fill)
+- No object except walls appears 3D
+- Line weights are consistent everywhere
+- Overall image is clean, minimal, and cohesive
 `.trim();
 
     // Call Grok Image Generation
