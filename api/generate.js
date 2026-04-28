@@ -32,78 +32,43 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-You are the world's BEST architectural drafter AND ELITE interior designer, specializing in highly functional layouts and premium wooden architectural models.
+TASK: Generate a top-down architectural model photograph based on the uploaded floorplan.
 
-Your role is to DESIGN within the given structure — NOT to change it.
+🚫 CLEAN SLATE (STRICT): Remove ALL original text, labels, room names, and dimensions from the uploaded floorplan. The final output must be completely free of any alphabetic or numeric characters.
 
-Task: Add furniture to the uploaded floorplan using intelligent, realistic, and highly functional placement.
+🏗️ CORE STYLE: HYBRID WOODEN MODEL
 
-------------------------------------------------------------------
-🚫 STRUCTURE IS ABSOLUTELY IMMUTABLE (HIGHEST PRIORITY)
-------------------------------------------------------------------
-- You are FORBIDDEN from modifying the structure in ANY way.
-- DO NOT remove, shift, resize, redraw, simplify, or reinterpret ANY walls.
-- DO NOT “clean up” or “optimize” the layout by altering structure.
-- DO NOT block or replace walls with furniture.
-- The uploaded floorplan walls are FINAL and UNTOUCHABLE.
+BASE: A single flat sheet of light-grained natural wood (#E6C79C).
 
-------------------------------------------------------------------
-🧹 TEXT & LABEL REMOVAL (MANDATORY)
-------------------------------------------------------------------
-- REMOVE all original text, room names, dimensions, and labels found on the uploaded floorplan.
-- The final image must be clean and free of any alphabetic or numeric characters.
-- If the floorplan says "Living Room" or "Kitchen", DO NOT include those words in the output.
+WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Render them as raised, physical wooden strips (#D8B58A). They must have visible thickness, a subtle top bevel, and cast a short, soft shadow to the bottom-right.
 
-------------------------------------------------------------------
-🧱 WALLS (STRONG 3D EFFECT - ONLY 3D ELEMENT)
-------------------------------------------------------------------
-Walls must clearly look like raised wooden pieces (laser-cut blocks placed on a board):
-- Color: slightly darker wood (#D8B58A)
-- Uniform thickness EXACTLY matching the original floorplan.
-- Clearly elevated above the floor (noticeable height).
-- 3D requirements: Visible vertical edges and clean top edges with a subtle bevel.
-- Shadow requirements: Light source from top-left; walls cast soft-edged, medium-length shadows.
+FURNITURE (STRICTLY 2D): All interior items must be FLAT 2D dark brown engraved lines (#4A2E1A) burnt into the wood base.
 
-------------------------------------------------------------------
-🪵 FLOOR & FURNITURE (STRICTLY 2D ENGRAVED)
-------------------------------------------------------------------
-- FLOOR: Light natural wood (#E6C79C) with very subtle grain.
-- FURNITURE: Must look like laser-engraved lines on the wood surface.
-- Color: dark brown (#4A2E1A).
-- Thin, crisp, uniform stroke.
-- 🚫 NO depth, NO height, NO shadows, NO 3D effect on furniture. It must look burned into the floor.
+CRITICAL: Furniture must have ZERO height, ZERO thickness, and cast NO shadows. It must look like a 2D drawing on the floor.
 
-------------------------------------------------------------------
-🧠 DESIGN LOGICAL PLACEMENT
-------------------------------------------------------------------
-1. LIVING ROOM: TV must be flush against a solid wall. Sofa must be DIRECTLY PARALLEL and FACING the TV. 
-2. KITCHEN: 2D countertops/sink/stove must be logically aligned. No 3D on counters.
-3. BATHROOM: Must include a clear 2D shower/bath area, toilet, and sink.
-4. CROSS-CONTAMINATION: NEVER place furniture in the wrong room (e.g., no toilets in kitchens).
+🛋️ LOGICAL FURNISHING RULES:
 
-------------------------------------------------------------------
-⚠️ HARD PROHIBITIONS
-------------------------------------------------------------------
-- DO NOT modify or simplify wall geometry.
-- DO NOT add 3D to furniture or fixtures (Countertops/Tables/Sofas must be FLAT).
-- DO NOT include ANY text, room names, or dimensions (Clean them off from the original).
-- DO NOT add shadows to anything except the walls.
+LIVING ROOM: Place a 2D-engraved TV flush against a solid wall. Place a 2D-engraved sofa directly parallel to and facing the TV. A 2D coffee table sits between them.
 
-------------------------------------------------------------------
-✅ FINAL VALIDATION
-------------------------------------------------------------------
-- TEXT: Are all original room names and labels removed? (If not -> REMOVE)
-- STRUCTURE: Are walls exactly as the upload? (If not -> FIX)
-- 3D/2D: Are ONLY the walls 3D and all furniture 2D? (If not -> FIX)
-- LOGIC: Does the sofa face the TV? Is there a shower in the bathroom? (If not -> FIX)
+KITCHEN: 2D-engraved countertops, sink, and stove must be flat against the floor. NO 3D extrusion on counters or fixtures.
 
-------------------------------------------------------------------
-🧾 OUTPUT
-------------------------------------------------------------------
-- NO TEXT, NO labels, NO dimensions.
-- Pure white background (#FFFFFF).
-- Preserve original aspect ratio.
-- Look like a premium physical wooden architectural model.
+BATHROOM: Must include 2D-engraved toilet, sink, and a clear rectangular shower enclosure area.
+
+DINING: If space allows, a centered 2D-engraved table with symmetrical 2D chairs.
+
+BEDROOM: 2D-engraved bed with headboard flush against a wall.
+
+⚠️ STRICT PROHIBITIONS:
+
+NO 3D FURNITURE: Do not extrude tables, chairs, or sofas. If it’s not a wall, it must be flat.
+
+NO WALL ALTERATIONS: Do not move, add, or delete any walls from the original image.
+
+NO SHADOWS ON FLOOR ITEMS: Only the raised walls cast shadows.
+
+NO TEXT: Wipe all original labels, dimensions, or room names.
+
+FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D "wooden blocks" glued on, and the furniture is merely "inked" onto the surface. Pure white background.
 `.trim();
 
     // Call Grok Image Generation
