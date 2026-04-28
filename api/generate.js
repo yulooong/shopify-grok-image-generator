@@ -32,43 +32,43 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-TASK: Generate a top-down architectural model photograph based on the uploaded floorplan.
+TASK: Generate a perfectly top-down (90-degree orthographic) architectural model photograph based on the uploaded floorplan.
 
-🚫 CLEAN SLATE (STRICT): Remove ALL original text, labels, room names, and dimensions from the uploaded floorplan. The final output must be completely free of any alphabetic or numeric characters.
+🚫 CLEAN SLATE (STRICT): Permanently remove and wipe clean ALL original text, labels, room names, and dimensions found on the uploaded floorplan. The final output must be completely clean of any alphabetic or numeric characters.
 
 🏗️ CORE STYLE: HYBRID WOODEN MODEL
 
-BASE: A single flat sheet of light-grained natural wood (#E6C79C).
+BASE: A single flat sheet of light natural wood (#E6C79C) with subtle grain.
 
-WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Render them as raised, physical wooden strips (#D8B58A). They must have visible thickness, a subtle top bevel, and cast a short, soft shadow to the bottom-right.
+WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Do not simplify geometry. Render them as raised, physical, laser-cut darker wooden blocks (#D8B58A). They must have visible depth, thickness, a subtle top bevel, and cast a short, soft shadow to the bottom-right.
 
-FURNITURE (STRICTLY 2D): All interior items must be FLAT 2D dark brown engraved lines (#4A2E1A) burnt into the wood base.
+FURNITURE (STRICTLY 2D ENGRAVED): All interior furniture must be FLAT 2D dark brown engraved lines (#4A2E1A) burnt into the wood base.
 
-CRITICAL: Furniture must have ZERO height, ZERO thickness, and cast NO shadows. It must look like a 2D drawing on the floor.
+CRITICAL 2D RULE: Furniture, kitchen countertops, and bathroom fixtures must have ZERO height, ZERO thickness, and cast NO shadows. They must look like a drawing on the floor.
 
-🛋️ LOGICAL FURNISHING RULES:
+🛋️ RIGID DESIGN LOGIC (MANDATORY):
 
-LIVING ROOM: Place a 2D-engraved TV flush against a solid wall. Place a 2D-engraved sofa directly parallel to and facing the TV. A 2D coffee table sits between them.
+LIVING ROOM: Anchor a 2D-engraved TV flush against the longest solid wall. Place a 2D-engraved sofa directly parallel to and facing the TV. A 2D coffee table must be centered between them.
 
-KITCHEN: 2D-engraved countertops, sink, and stove must be flat against the floor. NO 3D extrusion on counters or fixtures.
+KITCHEN: 2D-engraved countertops, sink, and stove must align along the walls. NO 3D extrusion on counters or fixtures.
 
-BATHROOM: Must include 2D-engraved toilet, sink, and a clear rectangular shower enclosure area.
+BATHROOM: MUST include 2D-engraved toilet, sink, and a clear, defined rectangular area for a shower or bath.
 
 DINING: If space allows, a centered 2D-engraved table with symmetrical 2D chairs.
 
-BEDROOM: 2D-engraved bed with headboard flush against a wall.
+BEDROOM: 2D-engraved bed with headboard flush against a solid wall.
 
 ⚠️ STRICT PROHIBITIONS:
 
-NO 3D FURNITURE: Do not extrude tables, chairs, or sofas. If it’s not a wall, it must be flat.
+NO TEXT: No labels, numbers, or dimensions in the final output.
 
-NO WALL ALTERATIONS: Do not move, add, or delete any walls from the original image.
+NO 3D FURNITURE: No thickness or shadows on tables, chairs, counters, or sofas.
 
 NO SHADOWS ON FLOOR ITEMS: Only the raised walls cast shadows.
 
-NO TEXT: Wipe all original labels, dimensions, or room names.
+NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
 
-FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D "wooden blocks" glued on, and the furniture is merely "inked" onto the surface. Pure white background.
+FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D wooden blocks glued on, the floorplan labels are erased, and the furniture is merely inked/engraved onto the wooden surface. Pure white background.
 `.trim();
 
     // Call Grok Image Generation
