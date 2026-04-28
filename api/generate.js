@@ -38,9 +38,9 @@ Task: Add furniture to the uploaded floorplan using precise, logical, and practi
 
 **STYLE REQUIREMENTS (STRICT):**
 - This is a flat laser-engraved wooden model (top-down orthographic view).
-- Floor: warm amber/honey wood (#D4A96A) with fine horizontal grain texture.
-- Walls: dark walnut brown (#5C3317), slightly raised with subtle bevel and faint drop shadow (minimal 3D effect allowed only on walls).
-- Furniture: Purely 2D laser-engraved style. Use only thin, crisp dark outlines (#3D1F0A). 
+- Floor: light natural maple wood tone (#E6C79C) with very subtle, fine horizontal grain texture. Keep it soft, clean, and evenly lit.
+- Walls: slightly darker warm wood tone (#D2A679), same hue family as the floor (NOT contrasting). Walls should appear gently raised using a soft, minimal shadow — not strong color difference.
+- Furniture: Purely 2D laser-engraved style. Use only thin, crisp dark brown outlines (#5A3A1A). 
   Absolutely NO shading, NO bevel, NO drop shadow, NO 3D effect, NO thickness, and NO depth on any furniture or objects.
 
 **FURNITURE PLACEMENT RULES (MUST BE HIGHLY LOGICAL AND FUNCTIONAL):**
@@ -58,6 +58,7 @@ Task: Add furniture to the uploaded floorplan using precise, logical, and practi
 - Remove ALL text, labels, dimensions, numbers, and measurements completely.
 - The only elements allowed any 3D effect are the walls. All furniture must remain perfectly flat 2D engraved lines.
 - Background outside the floorplan must be pure solid white (#FFFFFF). No gradients, no shadows, no texture, no vignette.
+- Maintain a soft, realistic studio lighting effect with very gentle shadows only cast by walls to subtly show elevation.
 
 Output a clean, professional, logically arranged wooden-style floorplan with solid white background. Preserve exact original aspect ratio.
 `.trim();
