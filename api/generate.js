@@ -32,142 +32,178 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-You are the world's BEST architectural drafter AND ELITE interior designer, specializing in highly functional, real-life livable layouts for wooden architectural models.
+You are the world's BEST architectural drafter AND ELITE interior designer, specializing in highly functional layouts and premium wooden architectural models.
 
-Your work must reflect professional interior design standards — not random placement.
+Your role is to DESIGN within the given structure — NOT to change it.
 
 Task: Add furniture to the uploaded floorplan using intelligent, realistic, and highly functional placement.
 
 ------------------------------------------------------------------
-🧠 CORE DESIGN THINKING (MANDATORY)
+🚫 STRUCTURE IS ABSOLUTELY IMMUTABLE (HIGHEST PRIORITY)
 ------------------------------------------------------------------
-Before placing ANY furniture, you MUST:
+- You are FORBIDDEN from modifying the structure in ANY way.
+- DO NOT remove, shift, resize, redraw, simplify, or reinterpret ANY walls.
+- DO NOT “clean up” or “optimize” the layout by altering structure.
+- DO NOT block or replace walls with furniture.
 
-1. Identify each room's purpose (living room, dining, bedroom, etc.)
-2. Define the PRIMARY FUNCTION of the room
-3. Establish a logical focal point (e.g., TV wall in living room)
-4. Plan human movement paths (clear walking circulation)
-5. ONLY THEN place furniture
+The uploaded floorplan walls are FINAL and UNTOUCHABLE.
 
-If furniture is placed without a clear functional relationship, the output is WRONG.
+If any wall is changed, missing, thinner, thicker, moved, or simplified → OUTPUT IS WRONG.
 
 ------------------------------------------------------------------
-🏠 LIVING ROOM (STRICT - NO EXCEPTIONS)
+🧱 WALLS (STRONG 3D EFFECT - ONLY 3D ELEMENT)
 ------------------------------------------------------------------
-This is the MOST IMPORTANT AREA.
+Walls must clearly look like raised wooden pieces (laser-cut blocks placed on a board):
 
-You MUST:
+- Color: slightly darker wood (#D8B58A)
+- Uniform thickness EXACTLY matching the original floorplan
+- Clearly elevated above the floor (noticeable height)
 
-- Identify the main TV wall (flat wall, not window, not doorway)
+3D requirements:
+- Visible vertical edge (not flat)
+- Stronger, but still realistic depth
+- Clean top edges with subtle bevel
+
+Shadow requirements:
+- Light source from top-left
+- Shadows must be:
+  - Clearly visible (stronger than before)
+  - Still soft-edged (not harsh)
+  - Short to medium length (not overly long)
+- Shadow must be consistent across ALL walls
+
+👉 Walls should look like physical wooden strips placed on top of the board.
+
+------------------------------------------------------------------
+🪵 FLOOR
+------------------------------------------------------------------
+- Light natural wood (#E6C79C)
+- Very subtle grain
+- Flat and even lighting
+
+------------------------------------------------------------------
+✏️ FURNITURE (STRICTLY 2D ENGRAVED)
+------------------------------------------------------------------
+Furniture must look like laser-engraved lines on the wood surface:
+
+- Color: dark brown (#4A2E1A)
+- Thin, crisp, uniform stroke
+- NO fill
+- NO shading
+- NO gradients
+- NO shadows
+- NO bevel
+- NO emboss
+- NO depth
+
+🚫 If furniture looks like objects instead of engraved lines → WRONG
+
+------------------------------------------------------------------
+🧠 DESIGN LOGIC (MANDATORY)
+------------------------------------------------------------------
+You are a PROFESSIONAL interior designer. Placement must be intentional.
+
+STEP 1: Identify room function  
+STEP 2: Define focal point  
+STEP 3: Plan walking paths  
+STEP 4: Place furniture logically  
+
+------------------------------------------------------------------
+🏠 LIVING ROOM (STRICT)
+------------------------------------------------------------------
+- Identify a proper TV wall (solid wall, no doors/windows)
 - Place TV flush against that wall
 
 - Place sofa DIRECTLY facing the TV
-  - Orientation must be correct (not sideways, not angled incorrectly)
-  - Sofa must visually and functionally “watch” the TV
+  - Must be aligned correctly (not sideways or angled wrongly)
 
-- Place coffee table centered between sofa and TV
+- Coffee table centered between sofa and TV
 
-- Maintain clear walking paths behind or beside sofa
+- Maintain clear walking space
 
-🚫 INVALID if:
-- Sofa is not facing TV
-- TV is floating or not against a wall
-- Furniture feels randomly scattered
-
-------------------------------------------------------------------
-🍽️ DINING AREA (MANDATORY WHEN SPACE EXISTS)
-------------------------------------------------------------------
-If there is an open space near the kitchen or living room:
-
-- You MUST add a dining table
-- Table must be centered in its zone
-- Add chairs evenly and symmetrically (2, 4, or 6 depending on space)
-- Ensure chairs have clearance to pull out
-
-🚫 INVALID if:
-- Dining area is missing when space clearly allows it
-- Chairs are uneven or randomly placed
+🚫 INVALID:
+- Sofa not facing TV
+- TV floating
+- Random placement
 
 ------------------------------------------------------------------
-🛏️ BEDROOMS (STRICT)
+🍽️ DINING AREA (REQUIRED WHEN SPACE EXISTS)
 ------------------------------------------------------------------
-- Bed headboard MUST be against a solid wall
-- Bed must be properly centered or logically positioned
+If there is open space near kitchen/living:
+
+- MUST include dining table
+- Table centered in its zone
+- Chairs evenly spaced and symmetrical
+- Ensure clearance for chairs
+
+🚫 INVALID:
+- Missing dining set when space clearly allows
+
+------------------------------------------------------------------
+🛏️ BEDROOMS
+------------------------------------------------------------------
+- Bed headboard against solid wall
+- Logical centering or placement
 - Max 2 bedside tables
-- Maintain walking space on at least one side
+- Maintain walking clearance
 
 ------------------------------------------------------------------
-🍳 KITCHEN (FUNCTIONAL LOGIC)
+🍳 KITCHEN
 ------------------------------------------------------------------
 - Follow work triangle (sink, stove, fridge)
-- Align cleanly along walls
-- Do NOT randomly scatter appliances
+- Align along walls
 
 ------------------------------------------------------------------
-🚿 BATHROOM (MINIMAL + PRACTICAL)
+🚿 BATHROOM
 ------------------------------------------------------------------
-- Max 1 toilet, 1 sink, 1 shower/bathtub
+- Max: toilet, sink, shower/bath
 - Maintain usable spacing
 
 ------------------------------------------------------------------
-🎨 VISUAL STYLE (UNCHANGED BUT ENFORCED)
+⚠️ HARD PROHIBITIONS
 ------------------------------------------------------------------
-- Walls = ONLY 3D elements (raised wood with soft shadow)
-- Furniture = 100% flat engraved lines
-
-Furniture rules:
-- NO fill
-- NO shadow
-- NO depth
-- NO 3D
-- Thin, consistent dark brown lines (#4A2E1A)
-
-Walls:
-- Slightly darker wood (#D8B58A)
-- Subtle height with soft top-left shadow
-- Uniform thickness everywhere
-
-Floor:
-- Light wood (#E6C79C)
-- Very subtle grain
+- DO NOT modify walls (ZERO tolerance)
+- DO NOT reduce or simplify wall geometry
+- DO NOT add 3D to furniture
+- DO NOT add shadows to furniture
+- DO NOT randomly place items
+- DO NOT overcrowd
 
 ------------------------------------------------------------------
-⚠️ CRITICAL PROHIBITIONS
+🎯 LIGHTING
 ------------------------------------------------------------------
-- NO random placement
-- NO ignoring room function
-- NO missing essential furniture (e.g., dining table when space exists)
-- NO incorrect orientation (e.g., sofa not facing TV)
-- NO overcrowding
-- NO blocking walking paths
+- Clean studio lighting
+- Even illumination
+- ONLY walls cast shadows
+- Stronger but controlled shadow for clear 3D effect
 
 ------------------------------------------------------------------
-✅ FINAL DESIGN VALIDATION (VERY IMPORTANT)
+✅ FINAL VALIDATION (MANDATORY)
 ------------------------------------------------------------------
-Before outputting, you MUST internally verify:
+Before output:
+
+STRUCTURE:
+- Are ALL original walls perfectly preserved? If not → FIX
+
+WALLS:
+- Do walls clearly look raised with visible depth? If not → INCREASE 3D effect
 
 LIVING ROOM:
-- Does the sofa directly face the TV? If not → FIX
-- Is the TV against a wall? If not → FIX
+- Sofa facing TV? If not → FIX
 
 DINING:
-- Is there space for dining? If yes → MUST include table + chairs
+- Space exists but no dining table? → ADD IT
 
-LAYOUT:
-- Does everything feel intentional and livable?
-- Are walking paths clear?
-
-VISUAL:
-- Is ALL furniture flat (engraved)?
-- Are ONLY walls 3D?
+FURNITURE:
+- Completely flat engraved lines? If not → FIX
 
 ------------------------------------------------------------------
-🧾 OUTPUT REQUIREMENTS
+🧾 OUTPUT
 ------------------------------------------------------------------
-- Remove ALL text, labels, dimensions
+- No text, labels, or dimensions
 - Pure white background (#FFFFFF)
 - Preserve original aspect ratio
-- Final result must feel like a REAL, well-designed home — not a random layout
+- Must look like a premium physical wooden architectural model
 `.trim();
 
     // Call Grok Image Generation
