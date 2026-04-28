@@ -47,14 +47,12 @@ Task: Add furniture to the uploaded floorplan using intelligent, realistic, and 
 - DO NOT block or replace walls with furniture.
 
 The uploaded floorplan walls are FINAL and UNTOUCHABLE.
-
 If any wall is changed, missing, thinner, thicker, moved, or simplified → OUTPUT IS WRONG.
 
 ------------------------------------------------------------------
 🧱 WALLS (STRONG 3D EFFECT - ONLY 3D ELEMENT)
 ------------------------------------------------------------------
 Walls must clearly look like raised wooden pieces (laser-cut blocks placed on a board):
-
 - Color: slightly darker wood (#D8B58A)
 - Uniform thickness EXACTLY matching the original floorplan
 - Clearly elevated above the floor (noticeable height)
@@ -85,7 +83,6 @@ Shadow requirements:
 ✏️ FURNITURE (STRICTLY 2D ENGRAVED)
 ------------------------------------------------------------------
 Furniture must look like laser-engraved lines on the wood surface:
-
 - Color: dark brown (#4A2E1A)
 - Thin, crisp, uniform stroke
 - NO fill
@@ -108,17 +105,15 @@ STEP 2: Define focal point
 STEP 3: Plan walking paths  
 STEP 4: Place furniture logically  
 
+🚫 CROSS-CONTAMINATION PROHIBITION: NEVER place furniture meant for one room type into another (e.g., NO sofas in kitchens or bathrooms, NO toilets in living rooms).
+
 ------------------------------------------------------------------
 🏠 LIVING ROOM (STRICT)
 ------------------------------------------------------------------
 - Identify a proper TV wall (solid wall, no doors/windows)
 - Place TV flush against that wall
-
-- Place sofa DIRECTLY facing the TV
-  - Must be aligned correctly (not sideways or angled wrongly)
-
+- Place sofa DIRECTLY facing the TV (must be aligned correctly, not sideways or angled wrongly)
 - Coffee table centered between sofa and TV
-
 - Maintain clear walking space
 
 🚫 INVALID:
@@ -130,7 +125,6 @@ STEP 4: Place furniture logically
 🍽️ DINING AREA (REQUIRED WHEN SPACE EXISTS)
 ------------------------------------------------------------------
 If there is open space near kitchen/living:
-
 - MUST include dining table
 - Table centered in its zone
 - Chairs evenly spaced and symmetrical
@@ -164,7 +158,7 @@ If there is open space near kitchen/living:
 ------------------------------------------------------------------
 - DO NOT modify walls (ZERO tolerance)
 - DO NOT reduce or simplify wall geometry
-- DO NOT add 3D to furniture
+- DO NOT add 3D to furniture (must look burned/engraved flat onto the floor)
 - DO NOT add shadows to furniture
 - DO NOT randomly place items
 - DO NOT overcrowd
@@ -182,20 +176,11 @@ If there is open space near kitchen/living:
 ------------------------------------------------------------------
 Before output:
 
-STRUCTURE:
-- Are ALL original walls perfectly preserved? If not → FIX
-
-WALLS:
-- Do walls clearly look raised with visible depth? If not → INCREASE 3D effect
-
-LIVING ROOM:
-- Sofa facing TV? If not → FIX
-
-DINING:
-- Space exists but no dining table? → ADD IT
-
-FURNITURE:
-- Completely flat engraved lines? If not → FIX
+STRUCTURE: Are ALL original walls perfectly preserved? If not → FIX
+WALLS: Do walls clearly look raised with visible depth? If not → INCREASE 3D effect
+LIVING ROOM: Sofa facing TV? If not → FIX
+DINING: Space exists but no dining table? → ADD IT
+FURNITURE: Completely flat engraved lines? If not → FIX
 
 ------------------------------------------------------------------
 🧾 OUTPUT
