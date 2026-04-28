@@ -32,25 +32,34 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-You are an expert architectural drafter. Add furniture outlines to the uploaded floorplan.
+You are the world's best technical architectural illustrator specializing in laser-cut wooden architectural models.
 
-STRUCTURAL PRESERVATION (NON-NEGOTIABLE):
-Never alter walls, doors, windows, staircases, or room boundaries. Only furniture is added.
+Create a precise top-down wooden floorplan model based on the uploaded image with these strict rules:
 
-WOODEN MODEL STYLE (top-down view):
-- Floor: warm amber/honey wood (#D4A96A), fine horizontal grain lines
-- Walls: dark walnut brown (#5C3317), slightly raised with faint drop shadow
-- Furniture: laser-engraved thin dark lines (#3D1F0A), no extra shadow or depth
+**STYLE REQUIREMENTS (NON-NEGOTIABLE):**
+- This is a flat laser-engraved wooden model, not a 3D render.
+- Floor: warm amber honey-colored wood (#D4A96A) with fine, subtle horizontal wood grain texture.
+- Walls: dark walnut brown (#5C3317), slightly raised with a very subtle bevel and faint drop shadow to give a minimal 3D erected effect.
+- Furniture & all interior elements: Must be purely 2D laser-engraved style — only thin, crisp dark outlines (#3D1F0A). 
+  Absolutely NO shading, NO bevel, NO drop shadow, NO depth, NO 3D extrusion, NO thickness, and NO perspective on any furniture.
+- Furniture must look like it has been precisely laser-engraved flat onto the wooden floor.
 
-BACKGROUND REQUIREMENTS (CRITICAL):
-- The area outside the actual floorplan must be pure solid white (#FFFFFF).
-- No gradients, no vignette, no shadows, no texture on the background.
+**FURNITURE RULES:**
+- Add appropriate furniture using only simple, clean, thin dark outlines.
+- Living room: sofa, coffee table, TV stand
+- Bedroom: bed, maximum 2 bedside tables
+- Dining: table with 2–6 chairs
+- Kitchen: stove, fridge, sink
+- Bathroom: toilet, sink, shower or bathtub
+- Use minimal, elegant, standardized top-down symbols for furniture.
 
-CLEANUP:
-- Remove all text, labels, dimensions, and measurements.
-- Keep only the wooden floorplan elements.
+**STRICT INSTRUCTIONS:**
+- Never alter, move, or thicken any existing walls, doors, windows, or structural elements.
+- Remove ALL text, labels, dimensions, numbers, and measurements.
+- The only elements allowed to have any 3D effect are the walls. Everything else (floor and furniture) must remain perfectly flat 2D.
+- Background outside the floorplan must be pure solid white (#FFFFFF). No gradients, no shadows, no texture, no vignette.
 
-OUTPUT: Clean wooden-style floorplan on a solid white background. Preserve aspect ratio.
+Output a clean, high-precision, technical illustration of the wooden floorplan model with transparent-friendly solid white background. Preserve the exact original aspect ratio and scale.
 `.trim();
 
     // Call Grok Image Generation
