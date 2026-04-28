@@ -32,35 +32,119 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-You are the world's best architectural drafter and interior space planner, specializing in creating realistic and highly functional wooden architectural models.
+You are the world's best architectural drafter and interior space planner, specializing in clean, minimal, laser-engraved wooden floorplan models.
 
 Task: Add furniture to the uploaded floorplan using precise, logical, and practical placement.
 
-**STYLE REQUIREMENTS (STRICT):**
-- This is a flat laser-engraved wooden model (top-down orthographic view).
-- Floor: light natural maple wood tone (#E6C79C) with very subtle, fine horizontal grain texture. Keep it soft, clean, and evenly lit.
-- Walls: slightly darker warm wood tone (#D2A679), same hue family as the floor (NOT contrasting). Walls should appear gently raised using a soft, minimal shadow — not strong color difference.
-- Furniture: Purely 2D laser-engraved style. Use only thin, crisp dark brown outlines (#5A3A1A). 
-  Absolutely NO shading, NO bevel, NO drop shadow, NO 3D effect, NO thickness, and NO depth on any furniture or objects.
+------------------------------------------------------------------
+🔒 CORE VISUAL RULE (HIGHEST PRIORITY)
+------------------------------------------------------------------
+This must look like a REAL laser-engraved wooden board:
+- Furniture is NOT physical objects.
+- Furniture must look like thin lines engraved (burned) into wood.
+- Absolutely NO visual depth for furniture.
 
-**FURNITURE PLACEMENT RULES (MUST BE HIGHLY LOGICAL AND FUNCTIONAL):**
-- Place furniture in realistic, practical positions that make sense for daily living.
-- Living room: Sofa and TV must face each other directly. Coffee table centered between sofa and TV. TV should be placed against a wall.
-- Bedroom: Bed centered on the longest wall or headboard against a solid wall. Add at most 2 bedside tables.
-- Dining area: Dining table centered in the room with chairs evenly arranged around it.
-- Kitchen: Place stove, refrigerator, and sink logically along the walls (work triangle principle).
-- Bathroom: Maximum one toilet, one sink, and one shower (or bathtub). Place them in functional positions with proper clearance.
-- Only add furniture that fits comfortably without overcrowding.
-- Leave adequate walking space and circulation paths in every room.
+If any furniture appears raised, shaded, filled, embossed, or 3D in any way, the output is WRONG.
 
-**STRICT INSTRUCTIONS:**
-- Never alter walls, doors, windows, staircases, or structural boundaries.
-- Remove ALL text, labels, dimensions, numbers, and measurements completely.
-- The only elements allowed any 3D effect are the walls. All furniture must remain perfectly flat 2D engraved lines.
-- Background outside the floorplan must be pure solid white (#FFFFFF). No gradients, no shadows, no texture, no vignette.
-- Maintain a soft, realistic studio lighting effect with very gentle shadows only cast by walls to subtly show elevation.
+------------------------------------------------------------------
+🎨 STYLE REQUIREMENTS (STRICT)
+------------------------------------------------------------------
+- Top-down orthographic view ONLY (perfectly flat, no perspective).
 
-Output a clean, professional, logically arranged wooden-style floorplan with solid white background. Preserve exact original aspect ratio.
+- Floor:
+  - Light natural wood tone (#E6C79C)
+  - Very subtle, uniform grain (barely visible)
+  - Flat lighting, no gradients, no hotspots
+
+- Walls:
+  - Slightly darker wood tone (#D8B58A) (same hue family, low contrast)
+  - Uniform thickness throughout the entire floorplan
+  - Slight elevation ONLY via a very soft, short, consistent shadow
+  - Shadow direction must be consistent (top-left light source)
+  - No harsh or long shadows
+
+- Furniture (CRITICAL):
+  - Pure 2D engraved line style ONLY
+  - Color: dark brown (#4A2E1A)
+  - Thin, crisp, uniform stroke weight
+  - NO fill, NO shading, NO gradients
+  - NO bevel, NO emboss, NO shadow
+  - NO thickness or depth
+  - Must look like vector line art etched into the wood
+
+- Doors, arcs, and symbols:
+  - Same thin stroke style as furniture
+  - Do NOT appear darker or thicker than furniture
+
+------------------------------------------------------------------
+🧠 FURNITURE PLACEMENT RULES (STRICT & FUNCTIONAL)
+------------------------------------------------------------------
+- Ensure realistic, practical layouts with proper walking space.
+
+- Living room:
+  - Sofa directly faces TV
+  - TV must be flush against a wall (not floating)
+  - Coffee table centered between sofa and TV
+
+- Bedroom:
+  - Bed headboard against a solid wall
+  - Centered where possible
+  - Max 2 bedside tables
+  - Maintain clear walking space on sides
+
+- Dining:
+  - Table centered
+  - Chairs evenly and symmetrically spaced
+
+- Kitchen:
+  - Stove, sink, refrigerator follow work triangle logic
+  - Aligned cleanly along walls
+
+- Bathroom:
+  - Max: 1 toilet, 1 sink, 1 shower/bathtub
+  - Maintain usable clearance
+
+- NEVER overcrowd any room
+
+------------------------------------------------------------------
+⚠️ STRICT PROHIBITIONS
+------------------------------------------------------------------
+- DO NOT modify walls, doors, or structure
+- DO NOT add textures, noise, or heavy grain
+- DO NOT use gradients anywhere
+- DO NOT add shadows to furniture
+- DO NOT vary line thickness randomly
+- DO NOT allow inconsistent wall thickness
+- DO NOT create uneven lighting
+- DO NOT let any object appear 3D except walls (very subtle only)
+
+------------------------------------------------------------------
+🎯 LIGHTING & RENDER QUALITY
+------------------------------------------------------------------
+- Clean studio lighting (like product photography)
+- Even illumination across entire floorplan
+- Only walls cast a very soft, minimal shadow
+- No vignetting, no dramatic lighting
+
+------------------------------------------------------------------
+🧾 OUTPUT REQUIREMENTS
+------------------------------------------------------------------
+- Remove ALL text, labels, dimensions, numbers
+- Background must be pure white (#FFFFFF)
+- Preserve exact original aspect ratio
+- Output must feel like a premium physical wooden model product photo
+
+------------------------------------------------------------------
+✅ FINAL QUALITY CHECK (MANDATORY)
+------------------------------------------------------------------
+Before outputting, ensure:
+- Furniture looks like engraved lines, NOT objects
+- No shadows or fills exist on furniture
+- Wall thickness is 100% consistent
+- Shadows are soft, minimal, and consistent direction
+- Entire image feels clean, minimal, and uniform
+
+If any of the above fails, regenerate internally until correct.
 `.trim();
 
     // Call Grok Image Generation
