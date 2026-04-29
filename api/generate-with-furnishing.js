@@ -68,7 +68,7 @@ NO SHADOWS ON FLOOR ITEMS: Only the raised walls cast shadows.
 
 NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
 
-FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D wooden blocks glued on, the floorplan labels are erased, and the furniture is merely inked/engraved onto the wooden surface. Pure white background.
+FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D wooden blocks glued on, the floorplan labels are erased, and the furniture is merely inked/engraved onto the wooden surface. Pure transparent background.
 `.trim();
 
     // Call Grok Image Generation
