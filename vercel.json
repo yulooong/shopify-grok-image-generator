@@ -1,9 +1,11 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/generate.js", "use": "@vercel/node" }
+    { "src": "api/generate-with-furnishing.js", "use": "@vercel/node" },
+    { "src": "api/generate-without-furnishing.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/generate", "dest": "/api/generate.js" }
+    { "src": "/api/generate-with-furnishing", "dest": "/api/generate-with-furnishing.js" },
+    { "src": "/api/generate-without-furnishing", "dest": "/api/generate-without-furnishing.js" },
   ]
 }
