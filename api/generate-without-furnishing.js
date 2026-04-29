@@ -32,31 +32,28 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-TASK: Generate a perfectly top-down (90-degree orthographic) architectural model photograph based on the uploaded floorplan.
-
+TASK: Generate a perfectly top-down (90-degree orthographic) architectural model photograph based on the uploaded floorplan. The uploaded floorplan is already furnished — preserve all furniture positions and shapes.
 🚫 CLEAN SLATE (STRICT): Permanently remove and wipe clean ALL original text, labels, room names, and dimensions found on the uploaded floorplan. The final output must be completely clean of any alphabetic or numeric characters.
-
 🏗️ CORE STYLE: HYBRID WOODEN MODEL
 
 BASE: A single flat sheet of light natural wood (#E6C79C) with subtle grain texture.
-
 WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Do not simplify geometry. Render them as raised, physical, laser-cut darker wooden blocks (#D8B58A). They must have visible depth, thickness, a subtle top bevel, and cast a short, soft shadow to the bottom-right.
 
-🪵 EMPTY FLOOR RULES (STRICTLY MANDATORY):
-- The floor inside every room must be completely bare — smooth, clean, unscratched natural wood.
-- NO furniture of any kind: no sofas, no beds, no tables, no chairs, no coffee tables, no wardrobes, no TV units, no cabinets, no counters.
-- NO kitchen fixtures: no countertops, no sinks, no stoves, no appliances.
-- NO bathroom fixtures: no toilets, no sinks, no bathtubs, no showers.
-- NO engravings, no etchings, no burnt-in lines, no outlines of furniture on the floor.
-- The floor surface must look like a freshly cut wooden board — untouched and completely empty.
+🪵 FLOOR & FURNITURE RULES (STRICTLY MANDATORY):
+
+The floor inside every room must be smooth, clean natural wood — as if freshly laser-engraved.
+All furniture, fixtures, and fittings from the uploaded floorplan must be translated into flat 2D etchings — precise, thin outlines lightly engraved or burnt into the wooden floor surface. They must appear as part of the floor, not raised above it.
+Etching style: fine, single-line contour outlines only, slightly darker than the base wood (#C9A87A), with no fill, no shading, no depth, and no shadow. Think laser-engraved on a wooden board.
+Every item present in the uploaded floorplan must be represented as an etching — sofas, beds, tables, chairs, kitchen counters, bathroom fixtures, wardrobes, appliances, etc.
+Maintain the exact position, scale, and shape of each furniture item as shown in the uploaded floorplan.
 
 ⚠️ STRICT PROHIBITIONS:
-- NO TEXT: No labels, numbers, or dimensions in the final output.
-- NO FURNITURE: Absolutely zero items on the floor. Any object placed on the floor is a violation.
-- NO FLOOR MARKINGS: No lines, no shadows, no silhouettes suggesting where furniture would go.
-- NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
 
-FINAL VISUAL CHECK: The result must look like a physical wooden model board where the raised walls are 3D wooden blocks and the floor is a completely blank, clean, empty wooden surface with zero objects inside any room. Pure white background.
+NO TEXT: No labels, numbers, or dimensions in the final output.
+NO 3D FURNITURE: No raised, volumetric, or shadowed furniture objects. All furniture must be flat floor etchings only.
+NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
+
+✅ FINAL VISUAL CHECK: The result must look like a physical wooden model board where: (1) the raised walls are 3D laser-cut wooden blocks, and (2) the floor is a warm natural wood surface with all furniture rendered as precise, flat 2D etchings engraved into it. Pure white background.
     `.trim();
 
     const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
