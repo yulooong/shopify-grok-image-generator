@@ -1,4 +1,4 @@
-// api/generate.js
+// api/generate-with-furnishing.js
 import sharp from 'sharp';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
