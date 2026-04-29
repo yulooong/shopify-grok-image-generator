@@ -6,6 +6,6 @@
   ],
   "routes": [
     { "src": "/api/generate-with-furnishing", "dest": "/api/generate-with-furnishing.js" },
-    { "src": "/api/generate-without-furnishing", "dest": "/api/generate-without-furnishing.js" },
+    { "src": "/api/generate-without-furnishing", "dest": "/api/generate-without-furnishing.js" }
   ]
 }
