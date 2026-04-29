@@ -53,7 +53,7 @@ NO TEXT: No labels, numbers, or dimensions in the final output.
 NO 3D FURNITURE: No raised, volumetric, or shadowed furniture objects. All furniture must be flat floor etchings only.
 NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
 
-✅ FINAL VISUAL CHECK: The result must look like a physical wooden model board where: (1) the raised walls are 3D laser-cut wooden blocks, and (2) the floor is a warm natural wood surface with all furniture rendered as precise, flat 2D etchings engraved into it. Pure white background.
+✅ FINAL VISUAL CHECK: The result must look like a physical wooden model board where: (1) the raised walls are 3D laser-cut wooden blocks, and (2) the floor is a warm natural wood surface with all furniture rendered as precise, flat 2D etchings engraved into it. Pure transparent background.
     `.trim();
 
     const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
