@@ -37,38 +37,24 @@ TASK: Generate a perfectly top-down (90-degree orthographic) architectural model
 🚫 CLEAN SLATE (STRICT): Permanently remove and wipe clean ALL original text, labels, room names, and dimensions found on the uploaded floorplan. The final output must be completely clean of any alphabetic or numeric characters.
 
 🏗️ CORE STYLE: HYBRID WOODEN MODEL
-
-BASE: A single flat sheet of light natural wood (#E6C79C) with subtle grain.
-
-WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Do not simplify geometry. Render them as raised, physical, laser-cut darker wooden blocks (#D8B58A). They must have visible depth, thickness, a subtle top bevel, and cast a short, soft shadow to the bottom-right.
-
-FURNITURE (STRICTLY 2D ENGRAVED): All interior furniture must be FLAT 2D dark brown engraved lines (#4A2E1A) burnt into the wood base.
-
-CRITICAL 2D RULE: Furniture, kitchen countertops, and bathroom fixtures must have ZERO height, ZERO thickness, and cast NO shadows. They must look like a drawing on the floor.
+BASE: A single flat sheet of light natural wood (#E6C79C) with subtle grain, cut exactly to the outer shape of the floorplan.
+WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Render them as raised, physical, laser-cut darker wooden blocks (#D8B58A) with visible depth, thickness, subtle top bevel, and a short soft shadow to the bottom-right.
+FURNITURE (STRICTLY 2D ENGRAVED): All interior furniture, countertops, and fixtures must be flat 2D dark brown engraved lines (#4A2E1A) burnt into the wood base. Zero height, zero thickness, and no shadows.
+TRANSPARENT BACKGROUND (MANDATORY):
+The final image must have a fully transparent background. There should be no background color, no gradient, no white space, no floor, no surface, no shadow outside the model. Only the wooden floorplan model itself should be visible. Everything outside the exact outline of the wooden base must be 100% transparent (alpha channel = 0). The model should appear cleanly cut out on a transparent canvas.
 
 🛋️ RIGID DESIGN LOGIC (MANDATORY):
-
-LIVING ROOM: Anchor a 2D-engraved TV flush against the longest solid wall. Place a 2D-engraved sofa directly parallel to and facing the TV. A 2D coffee table must be centered between them.
-
-KITCHEN: 2D-engraved countertops, sink, and stove must align along the walls. NO 3D extrusion on counters or fixtures.
-
-BATHROOM: MUST include 2D-engraved toilet, sink, and a clear, defined rectangular area for a shower or bath.
-
-DINING: If space allows, a centered 2D-engraved table with symmetrical 2D chairs.
-
-BEDROOM: 2D-engraved bed with headboard flush against a solid wall.
+[Keep your original room logic here — Living Room, Kitchen, etc.]
 
 ⚠️ STRICT PROHIBITIONS:
+NO TEXT of any kind
+NO 3D furniture
+NO shadows on floor items
+NO background whatsoever — transparent only
+NO rectangular frame, border, or extra canvas area around the model
+NO floor or surface beyond the wooden base
 
-NO TEXT: No labels, numbers, or dimensions in the final output.
-
-NO 3D FURNITURE: No thickness or shadows on tables, chairs, counters, or sofas.
-
-NO SHADOWS ON FLOOR ITEMS: Only the raised walls cast shadows.
-
-NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
-
-FINAL VISUAL CHECK: The result must look like a physical board where the walls are 3D wooden blocks glued on, the floorplan labels are erased, and the furniture is merely inked/engraved onto the wooden surface. Pure transparent background.
+FINAL OUTPUT REQUIREMENT: Pure wooden architectural model floating on a completely transparent background. Output as PNG with transparency enabled.
 `.trim();
 
     // Call Grok Image Generation
