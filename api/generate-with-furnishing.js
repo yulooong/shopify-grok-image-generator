@@ -32,29 +32,46 @@ export default async function handler(req, res) {
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
     const finalPrompt = `
-TASK: Generate a perfectly top-down (90-degree orthographic) architectural model photograph based on the uploaded floorplan.
+### ROLE: Professional Architectural Model Maker & Industrial Designer
 
-🚫 CLEAN SLATE (STRICT): Permanently remove and wipe clean ALL original text, labels, room names, and dimensions found on the uploaded floorplan. The final output must be completely clean of any alphabetic or numeric characters.
+### 🛑 STRUCTURAL INTEGRITY (NON-NEGOTIABLE SOURCE OF TRUTH):
+- THE UPLOADED IMAGE IS THE ABSOLUTE BLUEPRINT. 
+- DO NOT remove, shift, add, or modify any existing wall structures or partitions. 
+- The 3D walls must be a perfect 1:1 extrusion of the original lines. 
+- Preserve the exact layout, room proportions, and spatial geometry of the uploaded file.
 
-🏗️ CORE STYLE: HYBRID WOODEN MODEL
-BASE: A single flat sheet of light natural wood (#E6C79C) with subtle grain, cut exactly to the outer shape of the floorplan.
-WALLS (THE ONLY 3D ELEMENT): Trace the uploaded walls EXACTLY. Render them as raised, physical, laser-cut darker wooden blocks (#D8B58A) with visible depth, thickness, subtle top bevel, and a short soft shadow to the bottom-right.
-FURNITURE (STRICTLY 2D ENGRAVED): All interior furniture, countertops, and fixtures must be flat 2D dark brown engraved lines (#4A2E1A) burnt into the wood base. Zero height, zero thickness, and no shadows.
-TRANSPARENT BACKGROUND (MANDATORY):
-The final image must have a fully transparent background. There should be no background color, no gradient, no white space, no floor, no surface, no shadow outside the model. Only the wooden floorplan model itself should be visible. Everything outside the exact outline of the wooden base must be 100% transparent (alpha channel = 0). The model should appear cleanly cut out on a transparent canvas.
+### TASK:
+Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photograph. Interpret the layout and auto-populate it with 2D engraved furniture based on the logic below.
 
-🛋️ RIGID DESIGN LOGIC (MANDATORY):
-[Keep your original room logic here — Living Room, Kitchen, etc.]
+### CAMERA & VIEWPOINT:
+- View: Strict 90-degree Top-Down Orthographic Projection.
+- Lens: Zero perspective distortion, zero vanishing points.
+- Framing: The model must be centered and fill 85% of the frame.
 
-⚠️ STRICT PROHIBITIONS:
-NO TEXT of any kind
-NO 3D furniture
-NO shadows on floor items
-NO background whatsoever — transparent only
-NO rectangular frame, border, or extra canvas area around the model
-NO floor or surface beyond the wooden base
+### MATERIAL & COLOR SPECS:
+1. BASE: A single CNC-cut sheet of light birch wood (#E6C79C). The base must follow the exact exterior perimeter of the house.
+2. WALLS (3D): Extruded 3D laser-cut wood blocks (#D8B58A). Render walls with physical thickness and 10mm height. Add soft ambient occlusion shadows where walls meet the floor.
+3. FURNITURE (2D ENGRAVED): All interior elements must be dark brown "burnt" wood engravings (#4A2E1A).
+   - Furniture must be 100% flat (0mm height).
+   - No shadows on furniture.
+   - Use clean, minimalist line-art for furniture silhouettes.
 
-FINAL OUTPUT REQUIREMENT: Pure wooden architectural model floating on a completely transparent background. Output as PNG with transparency enabled.
+### AUTO-POPULATION ROOM LOGIC:
+Identify room types and auto-populate with these 2D engraved items (do not create new rooms, only fill existing ones):
+- LIVING ROOM: A sectional or 3-seater sofa, a rectangular coffee table, and a slim TV console.
+- KITCHEN: Perimeter countertops, a double sink, a stovetop/hob, and a refrigerator silhouette.
+- DINING AREA: A dining table with 4 to 6 chairs tucked in.
+- MASTER BEDROOM: A King-sized bed, two nightstands, and a long wardrobe silhouette.
+- OTHER BEDROOMS: A Queen or Twin bed and a small desk.
+- BATHROOMS: A walk-in shower area, a toilet, and a vanity/sink.
+
+### CLEANLINESS & OUTPUT PROTOCOL:
+- REMOVAL: Permanently wipe all original text, room names, dimensions, and grid lines. The final model should have NO alphabetic or numeric characters.
+- BACKGROUND: Place the model on a Solid, Pure White (#FFFFFF) background for high-contrast extraction.
+- NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props. Only the wooden model.
+
+### FINAL AESTHETIC: 
+Clean, professional, minimalist architectural mockup.
 `.trim();
 
     // Call Grok Image Generation
