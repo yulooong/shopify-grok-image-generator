@@ -72,6 +72,9 @@ Identify room types and auto-populate with these 2D engraved items (do not creat
 
 ### FINAL AESTHETIC: 
 Clean, professional, minimalist architectural mockup.
+
+### GUARDRAILS and final amendment
+- Walls must have the shadow and have the 3D effect. However, everything else MUST BE 2D, NOT RAISED, AND DO NOT HAVE ANY SHADOWS.
 `.trim();
 
     // Call Grok Image Generation
