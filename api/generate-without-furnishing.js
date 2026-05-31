@@ -3,6 +3,11 @@ import { v2 as cloudinary } from 'cloudinary';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
+// ============================================================
+// 🔀 PROVIDER TOGGLE — switch between 'grok' or 'openai'
+// ============================================================
+const API_PROVIDER = 'openai'; // 'grok' | 'openai'
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
@@ -30,6 +35,65 @@ async function buildTransparentFloorplan(floorplanBuffer) {
     .toBuffer();
 }
 
+async function generateWithGrok(imageDataUri, prompt) {
+  if (!process.env.XAI_API_KEY) throw new Error('XAI_API_KEY is missing');
+
+  const response = await fetch('https://api.x.ai/v1/images/edits', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.XAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'grok-imagine-image',
+      prompt,
+      image: { url: imageDataUri, type: 'image_url' },
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || 'Grok API error');
+
+  const url = data.data?.[0]?.url;
+  if (!url) throw new Error('No image URL returned from Grok');
+  return url;
+}
+
+async function generateWithOpenAI(imageDataUri, prompt) {
+  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is missing');
+
+  const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
+  const rawBuffer = Buffer.from(base64Data, 'base64');
+  const pngBuffer = await sharp(rawBuffer)
+    .flatten({ background: { r: 255, g: 255, b: 255 } })
+    .png()
+    .toBuffer();
+
+  const blob = new Blob([pngBuffer], { type: 'image/png' });
+  const form = new FormData();
+  form.append('model', 'gpt-image-2');
+  form.append('quality', 'low');
+  form.append('prompt', prompt);
+  form.append('image', blob, 'floorplan.png');
+
+  const response = await fetch('https://api.openai.com/v1/images/edits', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+    body: form,
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || 'OpenAI API error');
+
+  const result = data.data?.[0];
+  if (!result) throw new Error('No image returned from OpenAI');
+
+  if (result.url) return result.url;
+  if (result.b64_json) return `data:image/png;base64,${result.b64_json}`;
+
+  throw new Error('Unexpected OpenAI response format');
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -52,55 +116,52 @@ THE UPLOADED IMAGE IS THE ABSOLUTE BLUEPRINT.
 DO NOT remove, shift, add, modify, or invent any structures, partitions, or interior elements.
 The 3D walls must be a perfect 1:1 extrusion of the original lines.
 Preserve the exact layout, room proportions, spatial geometry, and all interior elements of the uploaded file.
+
 TASK:
 Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photograph. Faithfully translate every element visible in the uploaded floorplan into the wooden material language defined below. Do not add, remove, or invent any elements.
 FURNITURE TRANSLATION RULE:
 If the uploaded floorplan contains furniture or interior outlines, translate every piece faithfully as a 2D engraved element.
 If the uploaded floorplan contains no furniture, leave the interiors empty. Do not auto-populate or invent furniture.
+
 CAMERA & VIEWPOINT:
 View: Strict 90-degree Top-Down Orthographic Projection.
 Lens: Zero perspective distortion, zero vanishing points.
 Framing: The model must be centered and fill 85% of the frame.
+
 MATERIAL & COLOR SPECS:
 BASE: A single CNC-cut sheet of light birch wood (#F4E5CA).
 WALLS (3D): Extruded 3D laser-cut wood blocks (#C6935C). 10mm height. Soft ambient occlusion shadows.
 INTERIOR ELEMENTS (2D ENGRAVED): All furniture and fixtures as light birch wood engravings (#F4E5CA). 100% flat, no shadows.
+
 CLEANLINESS & OUTPUT PROTOCOL:
 REMOVAL: Wipe all text, room labels, dimensions, grid lines. No alphabetic or numeric characters.
 BACKGROUND: Plain white background.
 NO EXTRA ELEMENTS: No hands, rulers, tables, or studio props.
+
 GUARDRAILS:
 Walls must carry the shadow and 3D extruded effect.
 Everything else must be strictly 2D, not raised, and cast no shadows.
 Never invent. Never omit. Translate only what is shown.
     `.trim();
 
-    const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.XAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'grok-imagine-image',
-        prompt: finalPrompt,
-        image: { url: imageDataUri, type: 'image_url' },
-      }),
-    });
+    // ── Route to the selected provider ──────────────────────
+    let generatedUrl;
+    if (API_PROVIDER === 'openai') {
+      generatedUrl = await generateWithOpenAI(imageDataUri, finalPrompt);
+    } else {
+      generatedUrl = await generateWithGrok(imageDataUri, finalPrompt);
+    }
 
-    const grokData = await grokResponse.json();
-    if (!grokResponse.ok)
-      return res.status(500).json({ error: grokData.error?.message || 'Grok error', detail: grokData });
+    let floorplanBuffer;
+    if (generatedUrl.startsWith('data:')) {
+      const base64Data = generatedUrl.replace(/^data:image\/\w+;base64,/, '');
+      floorplanBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+      const floorplanResp = await fetch(generatedUrl);
+      if (!floorplanResp.ok) throw new Error('Failed to download generated image');
+      floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
+    }
 
-    const generatedUrl = grokData.data?.[0]?.url;
-    if (!generatedUrl)
-      return res.status(500).json({ error: 'No image URL from Grok', detail: grokData });
-
-    const floorplanResp = await fetch(generatedUrl);
-    if (!floorplanResp.ok)
-      return res.status(500).json({ error: 'Failed to download floorplan' });
-
-    const floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
     const finalImageBuffer = await buildTransparentFloorplan(floorplanBuffer);
 
     // ✅ Upload to Cloudinary — returns a short URL instead of base64
