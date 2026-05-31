@@ -63,7 +63,8 @@ NO STRUCTURE ALTERATIONS: The walls must match the uploaded floorplan perfectly.
         Authorization: `Bearer ${process.env.XAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'grok-imagine-image',
+        // model: 'grok-imagine-image',
+        model: 'grok-imagine-image-quality',
         prompt: finalPrompt,
         image: { url: imageDataUri, type: 'image_url' },
       }),
