@@ -57,7 +57,7 @@ async function generateWithOpenAI(imageDataUri, prompt) {
 
   // OpenAI /images/edits requires multipart/form-data
   const form = new FormData();
-  form.append('model', 'gpt-image-1');
+  form.append('model', 'gpt-image-2');
   form.append('quality', 'low');
   form.append('prompt', prompt);
   form.append('image', imageBuffer, {
