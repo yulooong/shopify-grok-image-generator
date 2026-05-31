@@ -1,5 +1,5 @@
-// api/generate-with-furnishing.js
 import sharp from 'sharp';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
@@ -8,20 +8,33 @@ export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 // ============================================================
 const API_PROVIDER = 'openai'; // 'grok' | 'openai'
 
-// Returns the wooden floorplan with transparent background
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+async function uploadToCloudinary(buffer) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'hausframes', format: 'png', resource_type: 'image' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
 async function buildTransparentFloorplan(floorplanBuffer) {
   return await sharp(floorplanBuffer)
     .ensureAlpha()
     .trim({ threshold: 15 })
-    .png({
-      quality: 95,
-      compressionLevel: 9,
-      adaptiveFiltering: true,
-    })
+    .png({ quality: 95, compressionLevel: 9, adaptiveFiltering: true })
     .toBuffer();
 }
 
-// ── Grok image generation ──────────────────────────────────
 async function generateWithGrok(imageDataUri, prompt) {
   if (!process.env.XAI_API_KEY) throw new Error('XAI_API_KEY is missing');
 
@@ -46,11 +59,9 @@ async function generateWithGrok(imageDataUri, prompt) {
   return url;
 }
 
-// ── OpenAI image generation ────────────────────────────────
 async function generateWithOpenAI(imageDataUri, prompt) {
   if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is missing');
 
-  // Convert base64 data URI → raw buffer → force PNG via sharp
   const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
   const rawBuffer = Buffer.from(base64Data, 'base64');
   const pngBuffer = await sharp(rawBuffer)
@@ -58,7 +69,6 @@ async function generateWithOpenAI(imageDataUri, prompt) {
     .png()
     .toBuffer();
 
-  // ✅ Use native FormData + Blob (Node 18+) — no form-data npm package needed
   const blob = new Blob([pngBuffer], { type: 'image/png' });
   const form = new FormData();
   form.append('model', 'gpt-image-2');
@@ -66,12 +76,9 @@ async function generateWithOpenAI(imageDataUri, prompt) {
   form.append('prompt', prompt);
   form.append('image', blob, 'floorplan.png');
 
-  // ✅ Do NOT manually set Content-Type — let fetch set it automatically with the correct boundary
   const response = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
     body: form,
   });
 
@@ -101,21 +108,17 @@ export default async function handler(req, res) {
 
     const finalPrompt = `
 ### ROLE: Professional Architectural Model Maker & Industrial Designer
-
 ### 🛑 STRUCTURAL INTEGRITY (NON-NEGOTIABLE SOURCE OF TRUTH):
 - THE UPLOADED IMAGE IS THE ABSOLUTE BLUEPRINT. 
 - DO NOT remove, shift, add, or modify any existing wall structures or partitions. 
 - The 3D walls must be a perfect 1:1 extrusion of the original lines. 
 - Preserve the exact layout, room proportions, and spatial geometry of the uploaded file.
-
 ### TASK:
 Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photograph. Interpret the layout and auto-populate it with 2D engraved furniture based on the logic below.
-
 ### CAMERA & VIEWPOINT:
 - View: Strict 90-degree Top-Down Orthographic Projection.
 - Lens: Zero perspective distortion, zero vanishing points.
 - Framing: The model must be centered and fill 85% of the frame.
-
 ### MATERIAL & COLOR SPECS:
 1. BASE: A single CNC-cut sheet of light birch wood (#F4E5CA). The base must follow the exact exterior perimeter of the house.
 2. WALLS (3D): Extruded 3D laser-cut wood blocks (#C6935C). Render walls with physical thickness and 10mm height. Add soft ambient occlusion shadows where walls meet the floor.
@@ -123,29 +126,21 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
    - Furniture must be 100% flat (0mm height).
    - No shadows on furniture.
    - Use clean, minimalist line-art for furniture silhouettes.
-
 ### AUTO-POPULATION ROOM LOGIC:
-Identify room types and auto-populate with these 2D engraved items (do not create new rooms, only fill existing ones):
 - LIVING ROOM: A sectional or 3-seater sofa, a rectangular coffee table, and a slim TV console.
 - KITCHEN: Perimeter countertops, a double sink, a stovetop/hob, and a refrigerator silhouette.
 - DINING AREA: A dining table with 4 to 6 chairs tucked in.
 - MASTER BEDROOM: A King-sized bed, two nightstands, and a long wardrobe silhouette.
 - OTHER BEDROOMS: A Queen or Twin bed and a small desk.
 - BATHROOMS: A walk-in shower area, a toilet, and a vanity/sink.
-
 ### CLEANLINESS & OUTPUT PROTOCOL:
-- REMOVAL: Permanently wipe all original text, room names, dimensions, and grid lines. The final model should have NO alphabetic or numeric characters.
+- REMOVAL: Permanently wipe all original text, room names, dimensions, and grid lines. No alphabetic or numeric characters.
 - BACKGROUND: Place the model on a white background.
-- NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props. Only the wooden model.
+- NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props.
+### GUARDRAILS:
+- Walls must have shadow and 3D effect. Everything else MUST BE 2D, NOT RAISED, AND CAST NO SHADOWS.
+    `.trim();
 
-### FINAL AESTHETIC: 
-Clean, professional, minimalist architectural mockup.
-
-### GUARDRAILS and final amendment
-- Walls must have the shadow and have the 3D effect. However, everything else MUST BE 2D, NOT RAISED, AND DO NOT HAVE ANY SHADOWS.
-`.trim();
-
-    // ── Route to the selected provider ──────────────────────
     let generatedUrl;
     if (API_PROVIDER === 'openai') {
       generatedUrl = await generateWithOpenAI(imageDataUri, finalPrompt);
@@ -153,7 +148,6 @@ Clean, professional, minimalist architectural mockup.
       generatedUrl = await generateWithGrok(imageDataUri, finalPrompt);
     }
 
-    // If the result is already a data URI (OpenAI b64 path), skip the download
     let floorplanBuffer;
     if (generatedUrl.startsWith('data:')) {
       const base64Data = generatedUrl.replace(/^data:image\/\w+;base64,/, '');
@@ -164,13 +158,17 @@ Clean, professional, minimalist architectural mockup.
       floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
     }
 
-    const finalImage = await buildTransparentFloorplan(floorplanBuffer);
+    const finalImageBuffer = await buildTransparentFloorplan(floorplanBuffer);
+
+    // ✅ Upload to Cloudinary — returns a short URL instead of base64
+    const hostedUrl = await uploadToCloudinary(finalImageBuffer);
 
     res.status(200).json({
       success: true,
       provider: API_PROVIDER,
-      imageUrl: `data:image/png;base64,${finalImage.toString('base64')}`,
+      imageUrl: hostedUrl, // ✅ short CDN URL, safe for Shopify cart properties
     });
+
   } catch (error) {
     console.error('❌ Crash:', error);
     res.status(500).json({ error: 'Server error: ' + error.message });
