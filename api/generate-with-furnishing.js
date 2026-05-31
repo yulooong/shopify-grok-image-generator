@@ -82,7 +82,8 @@ Clean, professional, minimalist architectural mockup.
         Authorization: `Bearer ${process.env.XAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'grok-imagine-image',
+        // model: 'grok-imagine-image',
+        model: 'grok-imagine-image-quality',
         prompt: finalPrompt,
         image: { url: imageDataUri, type: 'image_url' },
       }),
