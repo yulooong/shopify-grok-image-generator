@@ -6,7 +6,7 @@ export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 // ============================================================
 // 🔀 PROVIDER TOGGLE — switch between 'grok' or 'openai'
 // ============================================================
-const API_PROVIDER = 'grok'; // 'grok' | 'openai'
+const API_PROVIDER = 'openai'; // 'grok' | 'openai'
 
 // Returns the wooden floorplan with transparent background
 async function buildTransparentFloorplan(floorplanBuffer) {
