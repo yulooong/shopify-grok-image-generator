@@ -1,6 +1,5 @@
 // api/generate-with-furnishing.js
 import sharp from 'sharp';
-import FormData from 'form-data';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
@@ -51,31 +50,27 @@ async function generateWithGrok(imageDataUri, prompt) {
 async function generateWithOpenAI(imageDataUri, prompt) {
   if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is missing');
 
-  // Convert base64 data URI → raw buffer
+  // Convert base64 data URI → raw buffer → force PNG via sharp
   const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
   const rawBuffer = Buffer.from(base64Data, 'base64');
-
-  // ✅ Force-convert to valid PNG using sharp (OpenAI strictly requires PNG)
   const pngBuffer = await sharp(rawBuffer)
-    .flatten({ background: { r: 255, g: 255, b: 255 } }) // flatten transparency for JPGs
+    .flatten({ background: { r: 255, g: 255, b: 255 } })
     .png()
     .toBuffer();
 
-  // OpenAI /images/edits requires multipart/form-data
+  // ✅ Use native FormData + Blob (Node 18+) — no form-data npm package needed
+  const blob = new Blob([pngBuffer], { type: 'image/png' });
   const form = new FormData();
   form.append('model', 'gpt-image-1');
   form.append('quality', 'low');
   form.append('prompt', prompt);
-  form.append('image', pngBuffer, {       // ✅ now always a valid PNG
-    filename: 'floorplan.png',
-    contentType: 'image/png',
-  });
+  form.append('image', blob, 'floorplan.png');
 
+  // ✅ Do NOT manually set Content-Type — let fetch set it automatically with the correct boundary
   const response = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      ...form.getHeaders(),
     },
     body: form,
   });
