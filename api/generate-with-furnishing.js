@@ -67,7 +67,7 @@ Identify room types and auto-populate with these 2D engraved items (do not creat
 
 ### CLEANLINESS & OUTPUT PROTOCOL:
 - REMOVAL: Permanently wipe all original text, room names, dimensions, and grid lines. The final model should have NO alphabetic or numeric characters.
-- BACKGROUND: Place the model on a transparent background.
+- BACKGROUND: Place the model on a white background.
 - NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props. Only the wooden model.
 
 ### FINAL AESTHETIC: 
