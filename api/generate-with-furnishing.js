@@ -49,9 +49,9 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
 - Framing: The model must be centered and fill 85% of the frame.
 
 ### MATERIAL & COLOR SPECS:
-1. BASE: A single CNC-cut sheet of light birch wood (#E6C79C). The base must follow the exact exterior perimeter of the house.
-2. WALLS (3D): Extruded 3D laser-cut wood blocks (#D8B58A). Render walls with physical thickness and 10mm height. Add soft ambient occlusion shadows where walls meet the floor.
-3. FURNITURE (2D ENGRAVED): All interior elements must be dark brown "burnt" wood engravings (#4A2E1A).
+1. BASE: A single CNC-cut sheet of light birch wood (#F4E5CA). The base must follow the exact exterior perimeter of the house.
+2. WALLS (3D): Extruded 3D laser-cut wood blocks (#C6935C). Render walls with physical thickness and 10mm height. Add soft ambient occlusion shadows where walls meet the floor.
+3. FURNITURE (2D ENGRAVED): All interior elements must be light birch wood engravings (#F4E5CA).
    - Furniture must be 100% flat (0mm height).
    - No shadows on furniture.
    - Use clean, minimalist line-art for furniture silhouettes.
@@ -67,7 +67,7 @@ Identify room types and auto-populate with these 2D engraved items (do not creat
 
 ### CLEANLINESS & OUTPUT PROTOCOL:
 - REMOVAL: Permanently wipe all original text, room names, dimensions, and grid lines. The final model should have NO alphabetic or numeric characters.
-- BACKGROUND: Place the model on a Solid, Pure White (#FFFFFF) background for high-contrast extraction.
+- BACKGROUND: Place the model on a transparent background.
 - NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props. Only the wooden model.
 
 ### FINAL AESTHETIC: 
