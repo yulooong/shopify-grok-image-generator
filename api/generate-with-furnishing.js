@@ -61,7 +61,7 @@ async function generateWithOpenAI(imageDataUri, prompt) {
   // ✅ Use native FormData + Blob (Node 18+) — no form-data npm package needed
   const blob = new Blob([pngBuffer], { type: 'image/png' });
   const form = new FormData();
-  form.append('model', 'gpt-image-1');
+  form.append('model', 'gpt-image-2');
   form.append('quality', 'low');
   form.append('prompt', prompt);
   form.append('image', blob, 'floorplan.png');
