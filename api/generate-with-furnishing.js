@@ -53,14 +53,20 @@ async function generateWithOpenAI(imageDataUri, prompt) {
 
   // Convert base64 data URI → raw buffer
   const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
-  const imageBuffer = Buffer.from(base64Data, 'base64');
+  const rawBuffer = Buffer.from(base64Data, 'base64');
+
+  // ✅ Force-convert to valid PNG using sharp (OpenAI strictly requires PNG)
+  const pngBuffer = await sharp(rawBuffer)
+    .flatten({ background: { r: 255, g: 255, b: 255 } }) // flatten transparency for JPGs
+    .png()
+    .toBuffer();
 
   // OpenAI /images/edits requires multipart/form-data
   const form = new FormData();
-  form.append('model', 'gpt-image-2');
+  form.append('model', 'gpt-image-1');
   form.append('quality', 'low');
   form.append('prompt', prompt);
-  form.append('image', imageBuffer, {
+  form.append('image', pngBuffer, {       // ✅ now always a valid PNG
     filename: 'floorplan.png',
     contentType: 'image/png',
   });
@@ -77,13 +83,10 @@ async function generateWithOpenAI(imageDataUri, prompt) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error?.message || 'OpenAI API error');
 
-  // OpenAI can return either a URL or base64 — handle both
   const result = data.data?.[0];
   if (!result) throw new Error('No image returned from OpenAI');
 
   if (result.url) return result.url;
-
-  // If b64_json is returned instead, wrap it back into a data URI
   if (result.b64_json) return `data:image/png;base64,${result.b64_json}`;
 
   throw new Error('Unexpected OpenAI response format');
