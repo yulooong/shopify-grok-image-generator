@@ -1,19 +1,92 @@
 // api/generate-with-furnishing.js
 import sharp from 'sharp';
+import FormData from 'form-data';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+
+// ============================================================
+// 🔀 PROVIDER TOGGLE — switch between 'grok' or 'openai'
+// ============================================================
+const API_PROVIDER = 'openai'; // 'grok' | 'openai'
 
 // Returns the wooden floorplan with transparent background
 async function buildTransparentFloorplan(floorplanBuffer) {
   return await sharp(floorplanBuffer)
     .ensureAlpha()
-    .trim({ threshold: 15 })           // Fixed: now using object format
-    .png({ 
-      quality: 95, 
+    .trim({ threshold: 15 })
+    .png({
+      quality: 95,
       compressionLevel: 9,
-      adaptiveFiltering: true 
+      adaptiveFiltering: true,
     })
     .toBuffer();
+}
+
+// ── Grok image generation ──────────────────────────────────
+async function generateWithGrok(imageDataUri, prompt) {
+  if (!process.env.XAI_API_KEY) throw new Error('XAI_API_KEY is missing');
+
+  const response = await fetch('https://api.x.ai/v1/images/edits', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.XAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'grok-imagine-image',
+      prompt,
+      image: { url: imageDataUri, type: 'image_url' },
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || 'Grok API error');
+
+  const url = data.data?.[0]?.url;
+  if (!url) throw new Error('No image URL returned from Grok');
+  return url;
+}
+
+// ── OpenAI image generation ────────────────────────────────
+async function generateWithOpenAI(imageDataUri, prompt) {
+  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is missing');
+
+  // Convert base64 data URI → raw buffer
+  const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
+  const imageBuffer = Buffer.from(base64Data, 'base64');
+
+  // OpenAI /images/edits requires multipart/form-data
+  const form = new FormData();
+  form.append('model', 'gpt-image-1');
+  form.append('quality', 'low');
+  form.append('prompt', prompt);
+  form.append('image', imageBuffer, {
+    filename: 'floorplan.png',
+    contentType: 'image/png',
+  });
+
+  const response = await fetch('https://api.openai.com/v1/images/edits', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      ...form.getHeaders(),
+    },
+    body: form,
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || 'OpenAI API error');
+
+  // OpenAI can return either a URL or base64 — handle both
+  const result = data.data?.[0];
+  if (!result) throw new Error('No image returned from OpenAI');
+
+  if (result.url) return result.url;
+
+  // If b64_json is returned instead, wrap it back into a data URI
+  if (result.b64_json) return `data:image/png;base64,${result.b64_json}`;
+
+  throw new Error('Unexpected OpenAI response format');
 }
 
 export default async function handler(req, res) {
@@ -23,9 +96,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (!process.env.XAI_API_KEY)
-    return res.status(500).json({ error: 'API key missing' });
 
   try {
     const { image: imageDataUri } = req.body || {};
@@ -75,44 +145,32 @@ Clean, professional, minimalist architectural mockup.
 
 ### GUARDRAILS and final amendment
 - Walls must have the shadow and have the 3D effect. However, everything else MUST BE 2D, NOT RAISED, AND DO NOT HAVE ANY SHADOWS.
-
 `.trim();
 
-    // Call Grok Image Generation
-    const grokResponse = await fetch('https://api.x.ai/v1/images/edits', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.XAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'grok-imagine-image',
-        // model: 'grok-imagine-image-quality',
-        prompt: finalPrompt,
-        image: { url: imageDataUri, type: 'image_url' },
-      }),
-    });
+    // ── Route to the selected provider ──────────────────────
+    let generatedUrl;
+    if (API_PROVIDER === 'openai') {
+      generatedUrl = await generateWithOpenAI(imageDataUri, finalPrompt);
+    } else {
+      generatedUrl = await generateWithGrok(imageDataUri, finalPrompt);
+    }
 
-    const grokData = await grokResponse.json();
-    if (!grokResponse.ok)
-      return res.status(500).json({ error: grokData.error?.message || 'Grok error', detail: grokData });
+    // If the result is already a data URI (OpenAI b64 path), skip the download
+    let floorplanBuffer;
+    if (generatedUrl.startsWith('data:')) {
+      const base64Data = generatedUrl.replace(/^data:image\/\w+;base64,/, '');
+      floorplanBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+      const floorplanResp = await fetch(generatedUrl);
+      if (!floorplanResp.ok) throw new Error('Failed to download generated image');
+      floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
+    }
 
-    const generatedUrl = grokData.data?.[0]?.url;
-    if (!generatedUrl)
-      return res.status(500).json({ error: 'No image URL from Grok', detail: grokData });
-
-    // Download generated image
-    const floorplanResp = await fetch(generatedUrl);
-    if (!floorplanResp.ok)
-      return res.status(500).json({ error: 'Failed to download floorplan' });
-
-    const floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
-
-    // Convert background to transparent
     const finalImage = await buildTransparentFloorplan(floorplanBuffer);
 
     res.status(200).json({
       success: true,
+      provider: API_PROVIDER,
       imageUrl: `data:image/png;base64,${finalImage.toString('base64')}`,
     });
   } catch (error) {
