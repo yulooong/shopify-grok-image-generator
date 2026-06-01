@@ -27,6 +27,22 @@ async function uploadToCloudinary(buffer) {
   });
 }
 
+// ✅ Uploads the original customer image to Cloudinary and returns its URL
+async function uploadOriginalToCloudinary(imageDataUri) {
+  const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'hausframes/originals', resource_type: 'image' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
 async function padToSquare(imageDataUri) {
   const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
   const buffer = Buffer.from(base64Data, 'base64');
@@ -34,7 +50,6 @@ async function padToSquare(imageDataUri) {
 
   const { width, height } = meta;
 
-  // Add 15% safety padding on each side so AI never clips edge walls
   const extraPad = Math.round(Math.max(width, height) * 0.15);
   const size = Math.max(width, height) + extraPad * 2;
 
@@ -53,7 +68,6 @@ async function padToSquare(imageDataUri) {
     .toBuffer();
 
   const paddedDataUri = `data:image/png;base64,${paddedBuffer.toString('base64')}`;
-  // ✅ Return original dimensions so we can restore exact aspect ratio later
   return { paddedDataUri, originalWidth: width, originalHeight: height };
 }
 
@@ -101,22 +115,18 @@ async function buildTransparentFloorplan(floorplanBuffer, originalWidth, origina
     if (y - 1 >= 0)     queue.push(pos - width);
   }
 
-  // Step 1: Make transparent PNG
   const transparentBuffer = await sharp(pixels, { raw: { width, height, channels } })
     .png()
     .toBuffer();
 
-  // Step 2: Auto-trim transparent border to get tight content bounds
   const trimmedBuffer = await sharp(transparentBuffer)
     .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 0 })
     .png()
     .toBuffer();
 
-  // ✅ Step 3: Force-resize to EXACT original aspect ratio
-  // This guarantees the output dimensions match the original floorplan 1:1
   return await sharp(trimmedBuffer)
     .resize(originalWidth, originalHeight, {
-      fit: 'fill', // fill = exact dimensions, no letterboxing
+      fit: 'fill',
       kernel: sharp.kernel.lanczos3,
     })
     .png({ quality: 95, compressionLevel: 9, adaptiveFiltering: true })
@@ -194,7 +204,11 @@ export default async function handler(req, res) {
     const { image: imageDataUri } = req.body || {};
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
-    // ✅ Step 1: Pad to square with 15% safety margin, record original dimensions
+    // ✅ Step 1: Upload original customer image to Cloudinary immediately
+    // This URL will appear in the Shopify order after payment completes
+    const originalUrl = await uploadOriginalToCloudinary(imageDataUri);
+
+    // ✅ Step 2: Pad to square with 15% safety margin, record original dimensions
     const { paddedDataUri, originalWidth, originalHeight } =
       await padToSquare(imageDataUri);
 
@@ -240,7 +254,7 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
 - The wooden model must be isolatable — as if it were a sticker or a cutout PNG ready to be composited onto any background.
     `.trim();
 
-    // ✅ Step 2: Generate with padded square image
+    // ✅ Step 3: Generate with padded square image
     let generatedUrl;
     if (API_PROVIDER === 'openai') {
       generatedUrl = await generateWithOpenAI(paddedDataUri, finalPrompt);
@@ -248,7 +262,7 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
       generatedUrl = await generateWithGrok(paddedDataUri, finalPrompt);
     }
 
-    // ✅ Step 3: Download generated image
+    // ✅ Step 4: Download generated image
     let floorplanBuffer;
     if (generatedUrl.startsWith('data:')) {
       const base64Data = generatedUrl.replace(/^data:image\/\w+;base64,/, '');
@@ -259,18 +273,20 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
       floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
     }
 
-    // ✅ Step 4: Remove background + trim + force-resize to exact original dimensions
+    // ✅ Step 5: Remove background + trim + force-resize to exact original dimensions
     const finalImageBuffer = await buildTransparentFloorplan(
       floorplanBuffer, originalWidth, originalHeight
     );
 
-    // ✅ Step 5: Upload to Cloudinary
+    // ✅ Step 6: Upload processed AI image to Cloudinary
     const hostedUrl = await uploadToCloudinary(finalImageBuffer);
 
+    // ✅ Both URLs returned — Shopify stores them as order properties after payment
     res.status(200).json({
       success: true,
       provider: API_PROVIDER,
-      imageUrl: hostedUrl,
+      imageUrl: hostedUrl,      // AI-generated wooden floorplan
+      originalUrl: originalUrl, // Customer's original uploaded floorplan
     });
 
   } catch (error) {
