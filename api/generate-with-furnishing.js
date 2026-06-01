@@ -78,7 +78,12 @@ async function buildTransparentFloorplan(floorplanBuffer) {
 
   function isLightPixel(idx) {
     const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
-    return r > 180 && g > 180 && b > 180;
+    // Must be very light
+    const isLight = r > 220 && g > 220 && b > 220;
+    // Must be neutral/grey (not warm wood tone)
+    // Wood is warm: r-b ≈ 40+. White/grey background: r-b < 15
+    const isNeutral = Math.abs(r - b) < 15 && Math.abs(r - g) < 15;
+    return isLight && isNeutral;
   }
 
   const queue = [];
