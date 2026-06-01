@@ -53,10 +53,11 @@ async function padToSquare(imageDataUri) {
     .toBuffer();
 
   const paddedDataUri = `data:image/png;base64,${paddedBuffer.toString('base64')}`;
-  return { paddedDataUri };
+  // ✅ Return original dimensions so we can restore exact aspect ratio later
+  return { paddedDataUri, originalWidth: width, originalHeight: height };
 }
 
-async function buildTransparentFloorplan(floorplanBuffer) {
+async function buildTransparentFloorplan(floorplanBuffer, originalWidth, originalHeight) {
   const { data, info } = await sharp(floorplanBuffer)
     .ensureAlpha()
     .raw()
@@ -100,14 +101,24 @@ async function buildTransparentFloorplan(floorplanBuffer) {
     if (y - 1 >= 0)     queue.push(pos - width);
   }
 
-  // ✅ Build transparent PNG then auto-trim transparent border
-  // This replaces all mathematical cropping — Sharp finds the exact content bounds
+  // Step 1: Make transparent PNG
   const transparentBuffer = await sharp(pixels, { raw: { width, height, channels } })
     .png()
     .toBuffer();
 
-  return await sharp(transparentBuffer)
+  // Step 2: Auto-trim transparent border to get tight content bounds
+  const trimmedBuffer = await sharp(transparentBuffer)
     .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 0 })
+    .png()
+    .toBuffer();
+
+  // ✅ Step 3: Force-resize to EXACT original aspect ratio
+  // This guarantees the output dimensions match the original floorplan 1:1
+  return await sharp(trimmedBuffer)
+    .resize(originalWidth, originalHeight, {
+      fit: 'fill', // fill = exact dimensions, no letterboxing
+      kernel: sharp.kernel.lanczos3,
+    })
     .png({ quality: 95, compressionLevel: 9, adaptiveFiltering: true })
     .toBuffer();
 }
@@ -183,8 +194,9 @@ export default async function handler(req, res) {
     const { image: imageDataUri } = req.body || {};
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
-    // ✅ Step 1: Pad to square with 15% safety margin
-    const { paddedDataUri } = await padToSquare(imageDataUri);
+    // ✅ Step 1: Pad to square with 15% safety margin, record original dimensions
+    const { paddedDataUri, originalWidth, originalHeight } =
+      await padToSquare(imageDataUri);
 
     const finalPrompt = `
 ROLE: Professional Architectural Model Maker & Industrial Designer
@@ -240,8 +252,10 @@ Never invent. Never omit. Translate only what is shown.
       floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
     }
 
-    // ✅ Step 4: Remove background + auto-trim transparent border (no mathematical crop)
-    const finalImageBuffer = await buildTransparentFloorplan(floorplanBuffer);
+    // ✅ Step 4: Remove background + trim + force-resize to exact original dimensions
+    const finalImageBuffer = await buildTransparentFloorplan(
+      floorplanBuffer, originalWidth, originalHeight
+    );
 
     // ✅ Step 5: Upload to Cloudinary
     const hostedUrl = await uploadToCloudinary(finalImageBuffer);
