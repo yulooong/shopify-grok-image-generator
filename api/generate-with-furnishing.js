@@ -139,6 +139,14 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
 - NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props.
 ### GUARDRAILS:
 - Walls must have shadow and 3D effect. Everything else MUST BE 2D, NOT RAISED, AND CAST NO SHADOWS.
+
+### CUTOUT & SILHOUETTE PROTOCOL:
+- The final wooden model must be a CUTOUT — the base shape must follow the EXACT exterior perimeter of the floorplan with NO rectangular or square bounding box.
+- If the floorplan is L-shaped, the wooden base must be L-shaped. If it is irregular or odd-shaped, the wooden base must match that exact silhouette.
+- There must be NO background fill, NO rectangular base plate, and NO square frame surrounding the model.
+- Think of the final output as a laser-cut wooden piece lifted off a table — only the wood exists, shaped precisely to the floorplan outline.
+- TRANSPARENCY: All areas outside the exterior walls must be fully transparent (alpha = 0). The output must be a PNG with a transparent background, not white.
+- The wooden model must be isolatable — as if it were a sticker or a cutout PNG ready to be composited onto any background.
     `.trim();
 
     let generatedUrl;
