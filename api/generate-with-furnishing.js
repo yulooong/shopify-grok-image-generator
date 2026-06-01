@@ -34,11 +34,9 @@ async function padToSquare(imageDataUri) {
 
   const { width, height } = meta;
 
-  // ✅ Add 12% extra safety padding on each side so edge walls are never cropped
-  const extraPad = Math.round(Math.max(width, height) * 0.12);
-  const paddedWidth  = width  + extraPad * 2;
-  const paddedHeight = height + extraPad * 2;
-  const size = Math.max(paddedWidth, paddedHeight);
+  // Add 15% safety padding on each side so AI never clips edge walls
+  const extraPad = Math.round(Math.max(width, height) * 0.15);
+  const size = Math.max(width, height) + extraPad * 2;
 
   const left = Math.floor((size - width)  / 2);
   const top  = Math.floor((size - height) / 2);
@@ -55,21 +53,7 @@ async function padToSquare(imageDataUri) {
     .toBuffer();
 
   const paddedDataUri = `data:image/png;base64,${paddedBuffer.toString('base64')}`;
-  return { paddedDataUri, originalWidth: width, originalHeight: height, paddedSize: size, padLeft: left, padTop: top };
-}
-
-async function cropToOriginalRatio(buffer, originalWidth, originalHeight, paddedSize, padLeft, padTop) {
-  const { width: outSize } = await sharp(buffer).metadata();
-  const scale = outSize / paddedSize;
-
-  const cropLeft   = Math.floor(padLeft * scale);
-  const cropTop    = Math.floor(padTop  * scale);
-  const cropWidth  = Math.min(Math.round(originalWidth  * scale), outSize - cropLeft);
-  const cropHeight = Math.min(Math.round(originalHeight * scale), outSize - cropTop);
-
-  return await sharp(buffer)
-    .extract({ left: cropLeft, top: cropTop, width: cropWidth, height: cropHeight })
-    .toBuffer();
+  return { paddedDataUri };
 }
 
 async function buildTransparentFloorplan(floorplanBuffer) {
@@ -84,16 +68,12 @@ async function buildTransparentFloorplan(floorplanBuffer) {
 
   function isLightPixel(idx) {
     const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
-    // Must be very light
-    const isLight = r > 220 && g > 220 && b > 220;
-    // Must be neutral/grey — not warm wood tone
-    // Wood: r-b ≈ 40+. White/grey background: r-b < 15
+    const isLight   = r > 220 && g > 220 && b > 220;
     const isNeutral = Math.abs(r - b) < 15 && Math.abs(r - g) < 15;
     return isLight && isNeutral;
   }
 
   const queue = [];
-  // Seed from all four edges
   for (let x = 0; x < width; x++) {
     queue.push(0 * width + x);
     queue.push((height - 1) * width + x);
@@ -110,7 +90,7 @@ async function buildTransparentFloorplan(floorplanBuffer) {
     if (!isLightPixel(idx)) continue;
 
     visited[pos] = 1;
-    pixels[idx + 3] = 0; // make fully transparent
+    pixels[idx + 3] = 0;
 
     const x = pos % width;
     const y = Math.floor(pos / width);
@@ -120,7 +100,14 @@ async function buildTransparentFloorplan(floorplanBuffer) {
     if (y - 1 >= 0)     queue.push(pos - width);
   }
 
-  return await sharp(pixels, { raw: { width, height, channels } })
+  // ✅ Build transparent PNG then auto-trim transparent border
+  // This replaces all mathematical cropping — Sharp finds the exact content bounds
+  const transparentBuffer = await sharp(pixels, { raw: { width, height, channels } })
+    .png()
+    .toBuffer();
+
+  return await sharp(transparentBuffer)
+    .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 0 })
     .png({ quality: 95, compressionLevel: 9, adaptiveFiltering: true })
     .toBuffer();
 }
@@ -196,9 +183,8 @@ export default async function handler(req, res) {
     const { image: imageDataUri } = req.body || {};
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
-    // ✅ Step 1: Pad to square with extra safety margin before sending to AI
-    const { paddedDataUri, originalWidth, originalHeight, paddedSize, padLeft, padTop } =
-      await padToSquare(imageDataUri);
+    // ✅ Step 1: Pad to square with 15% safety margin
+    const { paddedDataUri } = await padToSquare(imageDataUri);
 
     const finalPrompt = `
 ### ROLE: Professional Architectural Model Maker & Industrial Designer
@@ -261,13 +247,10 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
       floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
     }
 
-    // ✅ Step 4: Crop back to original aspect ratio using exact pad offsets
-    const croppedBuffer = await cropToOriginalRatio(
-      floorplanBuffer, originalWidth, originalHeight, paddedSize, padLeft, padTop
-    );
+    // ✅ Step 4: Remove background + auto-trim transparent border (no mathematical crop)
+    const finalImageBuffer = await buildTransparentFloorplan(floorplanBuffer);
 
-    // ✅ Step 5: Remove background, upload to Cloudinary
-    const finalImageBuffer = await buildTransparentFloorplan(croppedBuffer);
+    // ✅ Step 5: Upload to Cloudinary
     const hostedUrl = await uploadToCloudinary(finalImageBuffer);
 
     res.status(200).json({
