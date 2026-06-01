@@ -27,6 +27,45 @@ async function uploadToCloudinary(buffer) {
   });
 }
 
+async function padToSquare(imageDataUri) {
+  const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
+  const meta = await sharp(buffer).metadata();
+
+  const { width, height } = meta;
+  const size = Math.max(width, height);
+  const left = Math.floor((size - width) / 2);
+  const top  = Math.floor((size - height) / 2);
+
+  const paddedBuffer = await sharp(buffer)
+    .extend({
+      top,
+      bottom: size - height - top,
+      left,
+      right:  size - width - left,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
+    .png()
+    .toBuffer();
+
+  const paddedDataUri = `data:image/png;base64,${paddedBuffer.toString('base64')}`;
+  return { paddedDataUri, originalWidth: width, originalHeight: height, paddedSize: size };
+}
+
+async function cropToOriginalRatio(buffer, originalWidth, originalHeight, paddedSize) {
+  const { width: outSize } = await sharp(buffer).metadata();
+  const scale = outSize / paddedSize;
+
+  const cropLeft   = Math.floor((paddedSize - originalWidth)  / 2 * scale);
+  const cropTop    = Math.floor((paddedSize - originalHeight) / 2 * scale);
+  const cropWidth  = Math.round(originalWidth  * scale);
+  const cropHeight = Math.round(originalHeight * scale);
+
+  return await sharp(buffer)
+    .extract({ left: cropLeft, top: cropTop, width: cropWidth, height: cropHeight })
+    .toBuffer();
+}
+
 async function buildTransparentFloorplan(floorplanBuffer) {
   const { data, info } = await sharp(floorplanBuffer)
     .ensureAlpha()
@@ -37,15 +76,12 @@ async function buildTransparentFloorplan(floorplanBuffer) {
   const pixels = new Uint8Array(data);
   const visited = new Uint8Array(width * height);
 
-  // Only remove light pixels connected to the image border (flood fill from edges)
-  // This preserves light wood colours INSIDE the floorplan
   function isLightPixel(idx) {
     const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
-    return r > 180 && g > 180 && b > 180; // catches white AND checkerboard grey
+    return r > 180 && g > 180 && b > 180;
   }
 
   const queue = [];
-  // Seed from all four edges
   for (let x = 0; x < width; x++) {
     queue.push(0 * width + x);
     queue.push((height - 1) * width + x);
@@ -62,7 +98,7 @@ async function buildTransparentFloorplan(floorplanBuffer) {
     if (!isLightPixel(idx)) continue;
 
     visited[pos] = 1;
-    pixels[idx + 3] = 0; // make fully transparent
+    pixels[idx + 3] = 0;
 
     const x = pos % width;
     const y = Math.floor(pos / width);
@@ -148,6 +184,10 @@ export default async function handler(req, res) {
     const { image: imageDataUri } = req.body || {};
     if (!imageDataUri) return res.status(400).json({ error: 'No image provided' });
 
+    // ✅ Step 1: Pad to square before sending to AI
+    const { paddedDataUri, originalWidth, originalHeight, paddedSize } =
+      await padToSquare(imageDataUri);
+
     const finalPrompt = `
 ### ROLE: Professional Architectural Model Maker & Industrial Designer
 ### 🛑 STRUCTURAL INTEGRITY (NON-NEGOTIABLE SOURCE OF TRUTH):
@@ -181,7 +221,6 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
 - NO EXTRA ELEMENTS: No hands, no rulers, no tables, no studio props.
 ### GUARDRAILS:
 - Walls must have shadow and 3D effect. Everything else MUST BE 2D, NOT RAISED, AND CAST NO SHADOWS.
-
 ### CUTOUT & SILHOUETTE PROTOCOL:
 - The final wooden model must be a CUTOUT — the base shape must follow the EXACT exterior perimeter of the floorplan with NO rectangular or square bounding box.
 - If the floorplan is L-shaped, the wooden base must be L-shaped. If it is irregular or odd-shaped, the wooden base must match that exact silhouette.
@@ -191,13 +230,15 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
 - The wooden model must be isolatable — as if it were a sticker or a cutout PNG ready to be composited onto any background.
     `.trim();
 
+    // ✅ Step 2: Generate with padded square image
     let generatedUrl;
     if (API_PROVIDER === 'openai') {
-      generatedUrl = await generateWithOpenAI(imageDataUri, finalPrompt);
+      generatedUrl = await generateWithOpenAI(paddedDataUri, finalPrompt);
     } else {
-      generatedUrl = await generateWithGrok(imageDataUri, finalPrompt);
+      generatedUrl = await generateWithGrok(paddedDataUri, finalPrompt);
     }
 
+    // ✅ Step 3: Download generated image
     let floorplanBuffer;
     if (generatedUrl.startsWith('data:')) {
       const base64Data = generatedUrl.replace(/^data:image\/\w+;base64,/, '');
@@ -208,15 +249,19 @@ Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photo
       floorplanBuffer = Buffer.from(await floorplanResp.arrayBuffer());
     }
 
-    const finalImageBuffer = await buildTransparentFloorplan(floorplanBuffer);
+    // ✅ Step 4: Crop back to original aspect ratio
+    const croppedBuffer = await cropToOriginalRatio(
+      floorplanBuffer, originalWidth, originalHeight, paddedSize
+    );
 
-    // ✅ Upload to Cloudinary — returns a short URL instead of base64
+    // ✅ Step 5: Remove background, upload to Cloudinary
+    const finalImageBuffer = await buildTransparentFloorplan(croppedBuffer);
     const hostedUrl = await uploadToCloudinary(finalImageBuffer);
 
     res.status(200).json({
       success: true,
       provider: API_PROVIDER,
-      imageUrl: hostedUrl, // ✅ short CDN URL, safe for Shopify cart properties
+      imageUrl: hostedUrl,
     });
 
   } catch (error) {
