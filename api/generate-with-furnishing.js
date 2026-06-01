@@ -30,7 +30,8 @@ async function uploadToCloudinary(buffer) {
 async function buildTransparentFloorplan(floorplanBuffer) {
   return await sharp(floorplanBuffer)
     .ensureAlpha()
-    .trim({ threshold: 15 })
+    .trim({ threshold: 30 })
+    .flatten({ background: { r: 255, g: 255, b: 255 } }) // flatten checkerboard to white
     .png({ quality: 95, compressionLevel: 9, adaptiveFiltering: true })
     .toBuffer();
 }
