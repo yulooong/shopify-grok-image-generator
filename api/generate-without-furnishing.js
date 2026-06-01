@@ -28,9 +28,51 @@ async function uploadToCloudinary(buffer) {
 }
 
 async function buildTransparentFloorplan(floorplanBuffer) {
-  return await sharp(floorplanBuffer)
+  const { data, info } = await sharp(floorplanBuffer)
     .ensureAlpha()
-    .trim({ threshold: 15 })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { width, height, channels } = info;
+  const pixels = new Uint8Array(data);
+  const visited = new Uint8Array(width * height);
+
+  // Only remove light pixels connected to the image border (flood fill from edges)
+  // This preserves light wood colours INSIDE the floorplan
+  function isLightPixel(idx) {
+    const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+    return r > 180 && g > 180 && b > 180; // catches white AND checkerboard grey
+  }
+
+  const queue = [];
+  // Seed from all four edges
+  for (let x = 0; x < width; x++) {
+    queue.push(0 * width + x);
+    queue.push((height - 1) * width + x);
+  }
+  for (let y = 0; y < height; y++) {
+    queue.push(y * width + 0);
+    queue.push(y * width + (width - 1));
+  }
+
+  while (queue.length > 0) {
+    const pos = queue.pop();
+    if (visited[pos]) continue;
+    const idx = pos * channels;
+    if (!isLightPixel(idx)) continue;
+
+    visited[pos] = 1;
+    pixels[idx + 3] = 0; // make fully transparent
+
+    const x = pos % width;
+    const y = Math.floor(pos / width);
+    if (x + 1 < width)  queue.push(pos + 1);
+    if (x - 1 >= 0)     queue.push(pos - 1);
+    if (y + 1 < height) queue.push(pos + width);
+    if (y - 1 >= 0)     queue.push(pos - width);
+  }
+
+  return await sharp(pixels, { raw: { width, height, channels } })
     .png({ quality: 95, compressionLevel: 9, adaptiveFiltering: true })
     .toBuffer();
 }
