@@ -27,8 +27,6 @@ export default async function handler(req, res) {
     const { bgUrl, fpUrl, qtUrl, names, date } = req.body || {};
     if (!bgUrl) return res.status(400).json({ error: 'bgUrl required' });
 
-    const SIZE = 800;
-
     // ✅ Download all images in parallel
     const [bgBuf, qtBuf, fpBuf] = await Promise.all([
       downloadBuffer(bgUrl),
@@ -36,26 +34,31 @@ export default async function handler(req, res) {
       fpUrl ? downloadBuffer(fpUrl).catch(() => null) : Promise.resolve(null),
     ]);
 
-    // ✅ Use background as the base — force exact 800x800 with fit:fill
-    // This avoids "composite must be same dimensions or smaller" errors entirely
-    const base = await sharp(bgBuf)
-      .resize(SIZE, SIZE, { fit: 'fill' })
-      .png()
-      .toBuffer();
+    // ✅ Use the background image's NATURAL dimensions — preserves portrait aspect ratio
+    const bgMeta = await sharp(bgBuf).metadata();
+    const W = bgMeta.width;
+    const H = bgMeta.height;
 
+    // Base: background at natural size
+    const base = await sharp(bgBuf).png().toBuffer();
     const composite = [];
 
     // Layer 1: Quote overlay — top:2%, left:12%, width:76%
     if (qtBuf) {
       try {
         const qtMeta = await sharp(qtBuf).metadata();
-        const qW = Math.round(SIZE * 0.76);
+        const qW = Math.round(W * 0.76);
         const qH = Math.round(qtMeta.height * (qW / qtMeta.width));
-        // ✅ Cap to ensure it never exceeds canvas
-        const safeQW = Math.min(qW, SIZE);
-        const safeQH = Math.min(qH, SIZE - Math.round(SIZE * 0.02));
-        const qtResized = await sharp(qtBuf).resize(safeQW, safeQH, { fit: 'fill' }).png().toBuffer();
-        composite.push({ input: qtResized, top: Math.round(SIZE * 0.02), left: Math.round(SIZE * 0.12) });
+        const safeQH = Math.min(qH, H - Math.round(H * 0.02));
+        const qtResized = await sharp(qtBuf)
+          .resize(qW, safeQH, { fit: 'inside' })
+          .png()
+          .toBuffer();
+        composite.push({
+          input: qtResized,
+          top: Math.round(H * 0.02),
+          left: Math.round(W * 0.12),
+        });
       } catch(e) { console.warn('Quote layer failed:', e.message); }
     }
 
@@ -63,37 +66,82 @@ export default async function handler(req, res) {
     if (fpBuf) {
       try {
         const fpMeta = await sharp(fpBuf).metadata();
-        const boxW  = Math.round(SIZE * 0.68);
-        const boxH  = Math.round(SIZE * 0.44);
+        const boxW  = Math.round(W * 0.68);
+        const boxH  = Math.round(H * 0.44);
         const scale = Math.min(boxW / fpMeta.width, boxH / fpMeta.height);
         const dW    = Math.min(Math.round(fpMeta.width  * scale), boxW);
         const dH    = Math.min(Math.round(fpMeta.height * scale), boxH);
-        const fpResized = await sharp(fpBuf).resize(dW, dH).png().toBuffer();
-        const fpX = Math.round(SIZE * 0.16 + (boxW - dW) / 2);
-        const fpY = Math.round(SIZE * 0.29 + (boxH - dH) / 2);
+        const fpResized = await sharp(fpBuf)
+          .resize(dW, dH)
+          .png()
+          .toBuffer();
+        const fpX = Math.round(W * 0.16 + (boxW - dW) / 2);
+        const fpY = Math.round(H * 0.29 + (boxH - dH) / 2);
         composite.push({ input: fpResized, top: fpY, left: fpX });
       } catch(e) { console.warn('Floorplan layer failed:', e.message); }
     }
 
-    // Layer 3: Names + date as SVG text overlay
-    if (names || date) {
-      const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      const parts = [];
-      if (names) {
-        parts.push(`<text x="400" y="690" font-family="Georgia,serif" font-size="30" fill="#000000" text-anchor="middle">${esc(names)}</text>`);
-        parts.push(`<line x1="310" y1="697" x2="490" y2="697" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>`);
-      }
-      if (date) {
-        parts.push(`<text x="400" y="708" font-family="Arial,sans-serif" font-size="13" fill="#000000" text-anchor="middle" letter-spacing="2">${esc(date.toUpperCase())}</text>`);
-      }
-      const svg = `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
-      composite.push({ input: Buffer.from(svg), top: 0, left: 0 });
+    // ✅ Layer 3: Names + date using Sharp's native text rendering — no server fonts needed
+    if (names) {
+      try {
+        const namesBuf = await sharp({
+          text: {
+            text: `<span foreground="black">${names.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>`,
+            font: 'serif',
+            fontfile: undefined,
+            width: Math.round(W * 0.6),
+            height: Math.round(H * 0.06),
+            align: 'centre',
+            rgba: true,
+            dpi: 144,
+          }
+        }).png().toBuffer();
+
+        const namesMeta = await sharp(namesBuf).metadata();
+        const namesX = Math.round((W - namesMeta.width) / 2);
+        const namesY = Math.round(H * 0.845);
+        composite.push({ input: namesBuf, top: namesY, left: namesX });
+
+        // Underline below names
+        const lineW = Math.round(W * 0.3);
+        const lineH = 2;
+        const lineBuf = await sharp({
+          create: { width: lineW, height: lineH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 90 } }
+        }).png().toBuffer();
+        composite.push({
+          input: lineBuf,
+          top: Math.round(H * 0.845) + namesMeta.height + 3,
+          left: Math.round((W - lineW) / 2),
+        });
+      } catch(e) { console.warn('Names layer failed:', e.message); }
     }
 
-    // ✅ Composite all layers onto the background base
+    if (date) {
+      try {
+        const dateBuf = await sharp({
+          text: {
+            text: `<span foreground="black">${date.toUpperCase().replace(/&/g,'&amp;')}</span>`,
+            font: 'sans-serif',
+            fontfile: undefined,
+            width: Math.round(W * 0.5),
+            height: Math.round(H * 0.03),
+            align: 'centre',
+            rgba: true,
+            dpi: 96,
+          }
+        }).png().toBuffer();
+
+        const dateMeta = await sharp(dateBuf).metadata();
+        const dateX = Math.round((W - dateMeta.width) / 2);
+        const dateY = Math.round(H * 0.895);
+        composite.push({ input: dateBuf, top: dateY, left: dateX });
+      } catch(e) { console.warn('Date layer failed:', e.message); }
+    }
+
+    // Composite all layers onto background
     const finalBuffer = await sharp(base)
       .composite(composite)
-      .jpeg({ quality: 88 })
+      .jpeg({ quality: 90 })
       .toBuffer();
 
     // Upload to Cloudinary
