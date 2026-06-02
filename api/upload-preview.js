@@ -27,19 +27,24 @@ export default async function handler(req, res) {
     const { bgUrl, fpUrl, qtUrl, names, date } = req.body || {};
     if (!bgUrl) return res.status(400).json({ error: 'bgUrl required' });
 
-    // ✅ Download all images in parallel
-    const [bgBuf, qtBuf, fpBuf] = await Promise.all([
+    // ✅ Download all images + fonts in parallel
+    const [bgBuf, qtBuf, fpBuf, regularFontBuf, lightFontBuf] = await Promise.all([
       downloadBuffer(bgUrl),
       qtUrl ? downloadBuffer(qtUrl).catch(() => null) : Promise.resolve(null),
       fpUrl ? downloadBuffer(fpUrl).catch(() => null) : Promise.resolve(null),
+      // ✅ Embed Lato Regular for names (similar to Amsterdam Four cursive feel)
+      fetch('https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.woff2')
+        .then(r => r.arrayBuffer()).then(b => Buffer.from(b)).catch(() => null),
+      // ✅ Embed Lato Light for date
+      fetch('https://fonts.gstatic.com/s/lato/v24/S6u9w4BMUTPHh7USSwiPHA.woff2')
+        .then(r => r.arrayBuffer()).then(b => Buffer.from(b)).catch(() => null),
     ]);
 
-    // ✅ Use background image's NATURAL dimensions — preserves portrait aspect ratio
+    // Natural dimensions — preserves portrait aspect ratio
     const bgMeta = await sharp(bgBuf).metadata();
     const W = bgMeta.width;
     const H = bgMeta.height;
 
-    // Base: background at natural size
     const base = await sharp(bgBuf).png().toBuffer();
     const composite = [];
 
@@ -71,17 +76,14 @@ export default async function handler(req, res) {
         const scale = Math.min(boxW / fpMeta.width, boxH / fpMeta.height);
         const dW    = Math.min(Math.round(fpMeta.width  * scale), boxW);
         const dH    = Math.min(Math.round(fpMeta.height * scale), boxH);
-        const fpResized = await sharp(fpBuf)
-          .resize(dW, dH)
-          .png()
-          .toBuffer();
+        const fpResized = await sharp(fpBuf).resize(dW, dH).png().toBuffer();
         const fpX = Math.round(W * 0.16 + (boxW - dW) / 2);
         const fpY = Math.round(H * 0.29 + (boxH - dH) / 2);
         composite.push({ input: fpResized, top: fpY, left: fpX });
       } catch(e) { console.warn('Floorplan layer failed:', e.message); }
     }
 
-    // ✅ Layer 3: Names + date as SVG — sized to match exact canvas dimensions
+    // ✅ Layer 3: Names + date with embedded fonts — guaranteed to render on Vercel
     if (names || date) {
       const esc = (s) => String(s)
         .replace(/&/g,'&amp;')
@@ -90,12 +92,37 @@ export default async function handler(req, res) {
         .replace(/"/g,'&quot;');
 
       const namesY       = Math.round(H * 0.855);
-      const lineY        = namesY + Math.round(H * 0.018);
-      const dateY        = lineY  + Math.round(H * 0.022);
+      const lineY        = namesY + Math.round(H * 0.022);
+      const dateY        = lineY  + Math.round(H * 0.024);
       const lineX1       = Math.round(W * 0.35);
       const lineX2       = Math.round(W * 0.65);
-      const fontSize     = Math.round(H * 0.032);
-      const dateFontSize = Math.round(H * 0.014);
+      const fontSize     = Math.round(H * 0.030);
+      const dateFontSize = Math.round(H * 0.013);
+
+      // Build @font-face declarations if fonts downloaded successfully
+      const fontFaces = [];
+      if (regularFontBuf) {
+        const b64 = regularFontBuf.toString('base64');
+        fontFaces.push(`@font-face {
+          font-family: 'Lato';
+          font-weight: 400;
+          src: url('data:font/woff2;base64,${b64}') format('woff2');
+        }`);
+      }
+      if (lightFontBuf) {
+        const b64 = lightFontBuf.toString('base64');
+        fontFaces.push(`@font-face {
+          font-family: 'Lato';
+          font-weight: 300;
+          src: url('data:font/woff2;base64,${b64}') format('woff2');
+        }`);
+      }
+
+      const styleBlock = fontFaces.length > 0
+        ? `<defs><style>${fontFaces.join('\n')}</style></defs>`
+        : '';
+
+      const fontFamily = fontFaces.length > 0 ? 'Lato' : 'Arial,sans-serif';
 
       const parts = [];
 
@@ -103,17 +130,17 @@ export default async function handler(req, res) {
         parts.push(`<text
           x="${Math.round(W / 2)}"
           y="${namesY}"
-          font-family="Arial,Helvetica,sans-serif"
+          font-family="${fontFamily}"
+          font-weight="400"
           font-size="${fontSize}"
           fill="#000000"
           text-anchor="middle"
-          dominant-baseline="auto"
         >${esc(names)}</text>`);
 
         parts.push(`<line
           x1="${lineX1}" y1="${lineY}"
           x2="${lineX2}" y2="${lineY}"
-          stroke="#000000" stroke-opacity="0.35" stroke-width="1"
+          stroke="#000000" stroke-opacity="0.4" stroke-width="1.5"
         />`);
       }
 
@@ -121,17 +148,17 @@ export default async function handler(req, res) {
         parts.push(`<text
           x="${Math.round(W / 2)}"
           y="${dateY}"
-          font-family="Arial,Helvetica,sans-serif"
+          font-family="${fontFamily}"
+          font-weight="300"
           font-size="${dateFontSize}"
           fill="#000000"
           text-anchor="middle"
-          letter-spacing="2"
-          dominant-baseline="auto"
+          letter-spacing="3"
         >${esc(date.toUpperCase())}</text>`);
       }
 
-      // ✅ SVG must be W×H — same dimensions as base image
       const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+        ${styleBlock}
         ${parts.join('\n')}
       </svg>`;
 
