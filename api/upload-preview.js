@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       fpUrl ? downloadBuffer(fpUrl).catch(() => null) : Promise.resolve(null),
     ]);
 
-    // ✅ Use the background image's NATURAL dimensions — preserves portrait aspect ratio
+    // ✅ Use background image's NATURAL dimensions — preserves portrait aspect ratio
     const bgMeta = await sharp(bgBuf).metadata();
     const W = bgMeta.width;
     const H = bgMeta.height;
@@ -81,61 +81,61 @@ export default async function handler(req, res) {
       } catch(e) { console.warn('Floorplan layer failed:', e.message); }
     }
 
-    // ✅ Layer 3: Names + date using Sharp's native text rendering — no server fonts needed
-    if (names) {
-      try {
-        const namesBuf = await sharp({
-          text: {
-            text: `<span foreground="black">${names.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>`,
-            font: 'serif',
-            fontfile: undefined,
-            width: Math.round(W * 0.6),
-            height: Math.round(H * 0.06),
-            align: 'centre',
-            rgba: true,
-            dpi: 144,
-          }
-        }).png().toBuffer();
+    // ✅ Layer 3: Names + date as SVG — sized to match exact canvas dimensions
+    if (names || date) {
+      const esc = (s) => String(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
 
-        const namesMeta = await sharp(namesBuf).metadata();
-        const namesX = Math.round((W - namesMeta.width) / 2);
-        const namesY = Math.round(H * 0.845);
-        composite.push({ input: namesBuf, top: namesY, left: namesX });
+      const namesY       = Math.round(H * 0.855);
+      const lineY        = namesY + Math.round(H * 0.018);
+      const dateY        = lineY  + Math.round(H * 0.022);
+      const lineX1       = Math.round(W * 0.35);
+      const lineX2       = Math.round(W * 0.65);
+      const fontSize     = Math.round(H * 0.032);
+      const dateFontSize = Math.round(H * 0.014);
 
-        // Underline below names
-        const lineW = Math.round(W * 0.3);
-        const lineH = 2;
-        const lineBuf = await sharp({
-          create: { width: lineW, height: lineH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 90 } }
-        }).png().toBuffer();
-        composite.push({
-          input: lineBuf,
-          top: Math.round(H * 0.845) + namesMeta.height + 3,
-          left: Math.round((W - lineW) / 2),
-        });
-      } catch(e) { console.warn('Names layer failed:', e.message); }
-    }
+      const parts = [];
 
-    if (date) {
-      try {
-        const dateBuf = await sharp({
-          text: {
-            text: `<span foreground="black">${date.toUpperCase().replace(/&/g,'&amp;')}</span>`,
-            font: 'sans-serif',
-            fontfile: undefined,
-            width: Math.round(W * 0.5),
-            height: Math.round(H * 0.03),
-            align: 'centre',
-            rgba: true,
-            dpi: 96,
-          }
-        }).png().toBuffer();
+      if (names) {
+        parts.push(`<text
+          x="${Math.round(W / 2)}"
+          y="${namesY}"
+          font-family="Arial,Helvetica,sans-serif"
+          font-size="${fontSize}"
+          fill="#000000"
+          text-anchor="middle"
+          dominant-baseline="auto"
+        >${esc(names)}</text>`);
 
-        const dateMeta = await sharp(dateBuf).metadata();
-        const dateX = Math.round((W - dateMeta.width) / 2);
-        const dateY = Math.round(H * 0.895);
-        composite.push({ input: dateBuf, top: dateY, left: dateX });
-      } catch(e) { console.warn('Date layer failed:', e.message); }
+        parts.push(`<line
+          x1="${lineX1}" y1="${lineY}"
+          x2="${lineX2}" y2="${lineY}"
+          stroke="#000000" stroke-opacity="0.35" stroke-width="1"
+        />`);
+      }
+
+      if (date) {
+        parts.push(`<text
+          x="${Math.round(W / 2)}"
+          y="${dateY}"
+          font-family="Arial,Helvetica,sans-serif"
+          font-size="${dateFontSize}"
+          fill="#000000"
+          text-anchor="middle"
+          letter-spacing="2"
+          dominant-baseline="auto"
+        >${esc(date.toUpperCase())}</text>`);
+      }
+
+      // ✅ SVG must be W×H — same dimensions as base image
+      const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+        ${parts.join('\n')}
+      </svg>`;
+
+      composite.push({ input: Buffer.from(svg), top: 0, left: 0 });
     }
 
     // Composite all layers onto background
