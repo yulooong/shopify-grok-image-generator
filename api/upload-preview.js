@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { v2 as cloudinary } from 'cloudinary';
 
-export const config = { api: { bodyParser: { sizeLimit: '2mb' } } };
+export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,20 +24,14 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { bgUrl, fpUrl, qtUrl, names, date } = req.body || {};
+    const { bgUrl, fpUrl, qtUrl, textLayer } = req.body || {};
     if (!bgUrl) return res.status(400).json({ error: 'bgUrl required' });
 
-    // ✅ Download all images + fonts in parallel
-    const [bgBuf, qtBuf, fpBuf, regularFontBuf, lightFontBuf] = await Promise.all([
+    // ✅ Download all images in parallel
+    const [bgBuf, qtBuf, fpBuf] = await Promise.all([
       downloadBuffer(bgUrl),
       qtUrl ? downloadBuffer(qtUrl).catch(() => null) : Promise.resolve(null),
       fpUrl ? downloadBuffer(fpUrl).catch(() => null) : Promise.resolve(null),
-      // ✅ Embed Lato Regular for names (similar to Amsterdam Four cursive feel)
-      fetch('https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.woff2')
-        .then(r => r.arrayBuffer()).then(b => Buffer.from(b)).catch(() => null),
-      // ✅ Embed Lato Light for date
-      fetch('https://fonts.gstatic.com/s/lato/v24/S6u9w4BMUTPHh7USSwiPHA.woff2')
-        .then(r => r.arrayBuffer()).then(b => Buffer.from(b)).catch(() => null),
     ]);
 
     // Natural dimensions — preserves portrait aspect ratio
@@ -61,7 +55,7 @@ export default async function handler(req, res) {
           .toBuffer();
         composite.push({
           input: qtResized,
-          top: Math.round(H * 0.02),
+          top:  Math.round(H * 0.02),
           left: Math.round(W * 0.12),
         });
       } catch(e) { console.warn('Quote layer failed:', e.message); }
@@ -83,86 +77,18 @@ export default async function handler(req, res) {
       } catch(e) { console.warn('Floorplan layer failed:', e.message); }
     }
 
-    // ✅ Layer 3: Names + date with embedded fonts — guaranteed to render on Vercel
-    if (names || date) {
-      const esc = (s) => String(s)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;');
-
-      const namesY       = Math.round(H * 0.855);
-      const lineY        = namesY + Math.round(H * 0.022);
-      const dateY        = lineY  + Math.round(H * 0.024);
-      const lineX1       = Math.round(W * 0.35);
-      const lineX2       = Math.round(W * 0.65);
-      const fontSize     = Math.round(H * 0.030);
-      const dateFontSize = Math.round(H * 0.013);
-
-      // Build @font-face declarations if fonts downloaded successfully
-      const fontFaces = [];
-      if (regularFontBuf) {
-        const b64 = regularFontBuf.toString('base64');
-        fontFaces.push(`@font-face {
-          font-family: 'Lato';
-          font-weight: 400;
-          src: url('data:font/woff2;base64,${b64}') format('woff2');
-        }`);
-      }
-      if (lightFontBuf) {
-        const b64 = lightFontBuf.toString('base64');
-        fontFaces.push(`@font-face {
-          font-family: 'Lato';
-          font-weight: 300;
-          src: url('data:font/woff2;base64,${b64}') format('woff2');
-        }`);
-      }
-
-      const styleBlock = fontFaces.length > 0
-        ? `<defs><style>${fontFaces.join('\n')}</style></defs>`
-        : '';
-
-      const fontFamily = fontFaces.length > 0 ? 'Lato' : 'Arial,sans-serif';
-
-      const parts = [];
-
-      if (names) {
-        parts.push(`<text
-          x="${Math.round(W / 2)}"
-          y="${namesY}"
-          font-family="${fontFamily}"
-          font-weight="400"
-          font-size="${fontSize}"
-          fill="#000000"
-          text-anchor="middle"
-        >${esc(names)}</text>`);
-
-        parts.push(`<line
-          x1="${lineX1}" y1="${lineY}"
-          x2="${lineX2}" y2="${lineY}"
-          stroke="#000000" stroke-opacity="0.4" stroke-width="1.5"
-        />`);
-      }
-
-      if (date) {
-        parts.push(`<text
-          x="${Math.round(W / 2)}"
-          y="${dateY}"
-          font-family="${fontFamily}"
-          font-weight="300"
-          font-size="${dateFontSize}"
-          fill="#000000"
-          text-anchor="middle"
-          letter-spacing="3"
-        >${esc(date.toUpperCase())}</text>`);
-      }
-
-      const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-        ${styleBlock}
-        ${parts.join('\n')}
-      </svg>`;
-
-      composite.push({ input: Buffer.from(svg), top: 0, left: 0 });
+    // ✅ Layer 3: Pre-rendered text PNG from browser — fonts guaranteed correct
+    if (textLayer) {
+      try {
+        const base64Data = textLayer.replace(/^data:image\/\w+;base64,/, '');
+        const textBuf = Buffer.from(base64Data, 'base64');
+        // Resize text layer to exactly match canvas dimensions
+        const textResized = await sharp(textBuf)
+          .resize(W, H, { fit: 'fill' })
+          .png()
+          .toBuffer();
+        composite.push({ input: textResized, top: 0, left: 0 });
+      } catch(e) { console.warn('Text layer failed:', e.message); }
     }
 
     // Composite all layers onto background
