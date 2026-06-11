@@ -12,6 +12,6 @@
     { "src": "/api/generate-without-furnishing", "dest": "/api/generate-without-furnishing.js" },
     { "src": "/api/upload-preview", "dest": "/api/upload-preview.js" },
     { "src": "/api/generate-pdf", "dest": "/api/generate-pdf.js" },
-    { "src": "/api/generate-svj", "dest": "/api/generate-svj.js" }
+    { "src": "/api/generate-svg", "dest": "/api/generate-svg.js" }
   ]
 }
