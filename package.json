@@ -4,6 +4,7 @@
   "dependencies": {
     "sharp": "^0.33.4",
     "form-data": "^4.0.0",
-    "cloudinary": "^2.0.0"
+    "cloudinary": "^2.0.0",
+    "pdf-lib": "^1.17.1"
   }
 }
