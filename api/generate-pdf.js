@@ -8,6 +8,15 @@ cloudinary.v2.config({
 });
 
 export default async function handler(req, res) {
+  // Handle CORS preflight
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -18,18 +27,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Fetch the image
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) throw new Error('Failed to fetch image');
     const imageBytes = await imageResponse.arrayBuffer();
 
-    // 2. Create a new A4 PDF
     const pdfDoc = await PDFDocument.create();
-    const A4_WIDTH  = 595.28;  // points (1 point = 1/72 inch)
+    const A4_WIDTH  = 595.28;
     const A4_HEIGHT = 841.89;
     const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
 
-    // 3. Embed the image
     let image;
     const contentType = imageResponse.headers.get('content-type') || '';
     if (contentType.includes('png')) {
@@ -38,22 +44,18 @@ export default async function handler(req, res) {
       image = await pdfDoc.embedJpg(imageBytes);
     }
 
-    // 4. Scale image to fit A4 with padding, preserving aspect ratio
     const padding = 40;
     const maxW = A4_WIDTH  - padding * 2;
     const maxH = A4_HEIGHT - padding * 2;
     const scaled = image.scaleToFit(maxW, maxH);
 
-    // 5. Center it on the page
     const x = (A4_WIDTH  - scaled.width)  / 2;
     const y = (A4_HEIGHT - scaled.height) / 2;
 
     page.drawImage(image, { x, y, width: scaled.width, height: scaled.height });
 
-    // 6. Serialize the PDF to bytes
     const pdfBytes = await pdfDoc.save();
 
-    // 7. Upload to Cloudinary as a PDF
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.v2.uploader.upload_stream(
         {
