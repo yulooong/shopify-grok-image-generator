@@ -6,7 +6,8 @@
     { "src": "api/upload-preview.js", "use": "@vercel/node" },
     { "src": "api/generate-pdf.js", "use": "@vercel/node" },
     { "src": "api/generate-svg.js", "use": "@vercel/node" },
-    { "src": "api/generate-vendor-pdf.js", "use": "@vercel/node" }
+    { "src": "api/generate-vendor-pdf.js", "use": "@vercel/node" },
+    { "src": "api/generate-v2-test.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/generate-with-furnishing", "dest": "/api/generate-with-furnishing.js" },
@@ -14,6 +15,10 @@
     { "src": "/api/upload-preview", "dest": "/api/upload-preview.js" },
     { "src": "/api/generate-pdf", "dest": "/api/generate-pdf.js" },
     { "src": "/api/generate-svg", "dest": "/api/generate-svg.js" },
-    { "src": "/api/generate-vendor-pdf", "dest": "/api/generate-vendor-pdf.js" }
-  ]
+    { "src": "/api/generate-vendor-pdf", "dest": "/api/generate-vendor-pdf.js" },
+    { "src": "/api/generate-v2-test", "dest": "/api/generate-v2-test.js" }
+  ],
+  "functions": {
+    "api/generate-v2-test.js": { "maxDuration": 120 }
+  }
 }
