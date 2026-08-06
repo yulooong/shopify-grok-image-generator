@@ -1,7 +1,4 @@
 // api/generate-vendor-pdf.js
-// Accepts a base64 PNG of the A4 paper insert (quote + names + date),
-// wraps it in a PDF, uploads to Cloudinary, and returns the URL.
-// Supports both portrait (default) and landscape via the "orientation" field.
 const { PDFDocument } = require('pdf-lib');
 const cloudinary = require('cloudinary').v2;
 const { Readable } = require('stream');
@@ -24,25 +21,28 @@ module.exports = async function handler(req, res) {
     const { imageBase64, orientation } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
 
-    // Decode the base64 PNG sent from the browser canvas
     const imageBytes = Buffer.from(imageBase64, 'base64');
 
-    // Create PDF page – landscape only when explicitly requested
     const isLandscape = orientation === 'landscape';
-    const pageWidth  = isLandscape ? 841.89 : 595.28; // 297 mm or 210 mm
-    const pageHeight = isLandscape ? 595.28 : 841.89; // 210 mm or 297 mm
+    const pageWidth  = isLandscape ? 841.89 : 595.28;
+    const pageHeight = isLandscape ? 595.28 : 841.89;
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
     const { width, height } = page.getSize();
 
-    // Embed the PNG and stretch it to fill the full A4 page
-    const pngImage = await pdfDoc.embedPng(imageBytes);
-    page.drawImage(pngImage, { x: 0, y: 0, width, height });
+    // Support both PNG and JPEG
+    let image;
+    try {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } catch (e) {
+      image = await pdfDoc.embedPng(imageBytes);
+    }
+
+    page.drawImage(image, { x: 0, y: 0, width, height });
 
     const pdfBytes = await pdfDoc.save();
 
-    // Upload the PDF to Cloudinary
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
