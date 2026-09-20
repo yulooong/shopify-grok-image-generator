@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { v2 as cloudinary } from 'cloudinary';
 
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+export const config = { api: { bodyParser: { sizeLimit: '20mb' } } };
 
 // ============================================================
 // 🔀 PROVIDER TOGGLE — switch between 'grok' or 'openai'
