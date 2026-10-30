@@ -214,230 +214,220 @@ export default async function handler(req, res) {
       await padToSquare(imageDataUri);
 
     const finalPrompt = `
-ROLE: Professional Architectural Model Maker, Industrial Designer and Precision Laser-Cutting Specialist.
+# FLOORPLAN TO WOODEN ARTWORK – IMAGE GENERATION PROMPT
 
-Your task is to transform the uploaded floorplan into a premium, photorealistic 2D wooden floorplan artwork.
+Transform the uploaded floorplan into a premium, photorealistic wooden floorplan artwork suitable for laser cutting and engraving.
 
-The final product should resemble a professionally manufactured, laser-cut and laser-engraved wooden floorplan, photographed directly from above.
+The uploaded floorplan is the **sole source of truth** for all architectural geometry and interior details. Reproduce it faithfully. Do not redesign, reinterpret, simplify or invent any structural elements.
 
-# 1. ABSOLUTE PRIORITY: STRUCTURAL ACCURACY
+## 1. ABSOLUTE PRIORITY: STRUCTURAL ACCURACY
 
-THE UPLOADED IMAGE IS THE SOLE SOURCE OF TRUTH.
+Preserve the original floorplan's architectural structure as accurately as possible.
 
-Treat the uploaded floorplan as a fixed architectural blueprint, NOT as a reference or creative inspiration.
+- Maintain the exact positions, lengths, orientations and relative thicknesses of all walls.
+- Preserve all wall intersections, corners, partitions, doorways, openings and passages.
+- Maintain the original room layout and proportions.
+- Do not move, resize, straighten, merge, remove or invent walls.
+- Do not modify the overall footprint or geometry of the house.
+- Do not introduce architectural elements that are not present in the uploaded floorplan.
 
-Preserve the original geometry with the highest possible accuracy.
+The priority hierarchy is:
 
-NON-NEGOTIABLE RULES:
-- Do not add, remove, move, resize, rotate, merge or reinterpret any physical structural element.
-- Preserve the exact positions, lengths, thicknesses and orientations of all walls.
-- Preserve every wall intersection, corner, partition, doorway, opening and passage.
-- Do not close existing openings or create new ones.
-- Preserve the exact room layout, proportions and spatial relationships.
-- Do not straighten, simplify, smooth or optimise the original architectural geometry.
-- Never substitute an approximate reconstruction for an original detail.
+1. Architectural and structural accuracy.
+2. Accurate preservation of interior furniture and fixtures.
+3. Correct distinction between raised wooden walls and engraved walls.
+4. Accurate wooden materials and colours.
+5. Overall visual aesthetics.
 
-The walls must follow the original floorplan lines as faithfully as possible.
+Never sacrifice structural accuracy for aesthetics.
 
-PRIORITY HIERARCHY:
-1. Structural and geometric accuracy.
-2. Preservation of all original physical interior elements.
-3. Correct distinction between solid-filled walls and engraved interior elements.
-4. Material and colour accuracy.
-5. Photographic realism and visual aesthetics.
+## 2. INTERIOR ELEMENTS AND FURNITURE
 
-If any artistic enhancement conflicts with structural accuracy, ALWAYS prioritise structural accuracy.
-
-# 2. INTERIOR ELEMENTS & FURNITURE TRANSLATION
-
-Faithfully translate every visible furniture item, fixture and physical interior detail into a flat 2D engraved representation.
+Preserve all identifiable furniture, fittings and interior fixtures from the original floorplan.
 
 Examples include:
-- Beds, sofas, chairs and dining tables.
-- Kitchen counters and cabinets.
+- Beds, sofas, chairs and tables.
+- Kitchen counters, cabinets and islands.
+- Wardrobes and built-in storage.
 - Toilets, sinks, bathtubs and shower areas.
-- Wardrobes and storage units.
-- Other furniture and fixtures visible in the original floorplan.
+- Other identifiable furniture and permanent fixtures.
 
-STRICT RULES:
-- Every original physical furniture item must be retained.
-- Preserve its original position, orientation, shape and relative proportions.
-- All furniture and fixtures must remain completely flat.
-- Represent furniture through engraved outlines and details on the birch surface.
-- Never turn furniture into 3D miniature objects.
-- Never create raised surfaces, additional wooden blocks or physical depth for interior elements.
-- Do not automatically furnish empty rooms.
-- If the original floorplan contains no furniture, leave those areas empty.
+Requirements:
+- Preserve their original positions, shapes, orientations and proportions.
+- Represent all furniture and interior fixtures as flat engraved details on the wooden base.
+- Use the light birch colour for engraved furniture and fixtures.
+- Maintain recognisable shapes and details without introducing unnecessary complexity.
+- Do not invent, remove, rearrange or replace furniture.
+- Do not turn furniture into raised or three-dimensional objects.
 
-If an element is ambiguous, preserve its original shape and position rather than guessing its identity or inventing a replacement.
+## 3. WALL CLASSIFICATION AND MANUFACTURING RULES
 
-# 3. ARCHITECTURAL ANNOTATION & LINE CLEANUP
+This is a critical requirement. Distinguish between external perimeter walls, internal walls suitable for physical wooden pieces, and thin internal walls that should be engraved.
 
-The final wooden floorplan must represent the actual physical architectural layout, NOT the technical drafting annotations of the original floorplan.
+### A. External perimeter walls – ALWAYS RAISED
 
-REMOVE all non-physical reference markings and drafting annotations, including:
-- Dotted and dashed lines.
-- Dashed measurement guides.
-- Grid lines.
-- Dimension extension lines.
-- Construction guides.
-- Leader lines and annotation pointers.
-- Arrows, symbols and reference markings.
-- Room labels and text annotations.
-- Measurements and dimensions.
-- Other non-structural drafting markings.
+- Every wall forming the external boundary or perimeter of the house MUST be represented as a separate, raised wooden wall.
+- This rule applies regardless of the wall's apparent thickness.
+- External perimeter walls must NEVER be represented as flat engraved lines.
+- Preserve their original geometry, positions, thicknesses, corners and connections.
+- Do not classify any external perimeter wall as an engraved wall.
 
-IMPORTANT DISTINCTION:
+### B. Internal walls – RELATIVE THICKNESS CLASSIFICATION
 
-Do not automatically preserve every line simply because it appears in the original floorplan.
+Use the thickness of the external perimeter walls as the reference for classifying internal walls.
 
-Retain actual physical architectural structures, walls, partitions, openings, furniture and fixtures that belong in the final wooden floorplan.
+- Internal walls with a thickness of 60% or more of the external wall thickness should be represented as separate, raised wooden walls.
+- Internal walls with a thickness below 60% of the external wall thickness should be represented as flat, laser-engraved lines directly onto the birch base.
+- Apply this comparison proportionally, regardless of the overall size or scale of the floorplan.
+- Do not artificially increase or decrease wall thickness to force a particular classification.
+- If an internal wall is too thin or structurally unsuitable to be produced as a separate wooden piece, use laser engraving instead.
+- When the thickness of an internal wall cannot be determined reliably, favour engraving rather than creating a narrow, fragile wooden piece.
 
-Remove decorative, projected, hidden, reference or annotation lines that do not represent physical elements in the final product.
+### C. Visual distinction
 
-Dotted or dashed lines must NOT be converted into solid walls or engraved furniture.
+Use these exact colours:
 
-When a dotted or dashed line is ambiguous, exclude it rather than inventing a physical structure from it.
+- Raised wooden walls: solid dark walnut/brown (#C6935C).
+- Engraved internal walls: solid black (#000000).
+- Wooden base: light natural birch (#F4E5CA).
 
-# 4. CAMERA & VIEWPOINT
+Raised walls must be solid-filled with the dark walnut/brown colour, not represented as thin outlines.
 
-VIEW: Strict 90-degree top-down orthographic projection.
+Engraved walls must appear as flat black lines directly on the birch surface.
 
-LENS: Zero perspective distortion. No vanishing points. No tilted camera.
+### D. Structural consistency
 
-FRAMING:
-- Centre the complete wooden floorplan.
-- The floorplan should occupy approximately 85% of the image.
-- Maintain the original floorplan's aspect ratio.
-- Ensure the entire floorplan remains visible without cropping.
-- Keep all walls and interior details sharp and clearly distinguishable.
+- Preserve all original wall positions, intersections, corners and openings.
+- Never omit, merge, reposition or invent walls.
+- Never turn a raised external wall into an engraved line.
+- Do not let the classification process alter the original floorplan geometry.
 
-The camera must look directly down onto the flat wooden surface.
+## 4. REMOVE NON-PHYSICAL ANNOTATIONS
 
-# 5. MATERIAL & COLOUR SPECIFICATIONS
+Remove all drafting annotations and reference markings that are not actual physical parts of the house.
 
-The entire floorplan must be completely FLAT and TWO-DIMENSIONAL.
+Remove:
+- Room names and labels.
+- Measurements, dimensions and numerical annotations.
+- Dimension lines and extension lines.
+- Grid lines and construction guides.
+- Arrows, symbols, leader lines and reference markers.
+- North indicators and directional symbols.
+- Dotted or dashed drafting lines.
+- Other text or markings that do not represent physical architectural elements.
 
-BASE:
-- One continuous flat sheet of light birch wood.
-- Base colour: #F4E5CA.
-- Subtle, natural birch wood grain.
-- Smooth and consistent surface.
-- Premium natural wooden appearance.
-- No unnecessary patterns or decorative textures.
+Important:
+- Retain actual physical walls, partitions, openings, furniture and fixtures.
+- Do not mistake genuine architectural structures for drafting annotations.
+- If a dotted or dashed line cannot confidently be identified as a physical structure, exclude it rather than inventing a solid wall.
 
-WALLS (2D SOLID-FILLED WOODEN DESIGN):
-- Material appearance: Darker natural wood.
-- Target colour: #C6935C.
-- Represent all walls as solid-filled, flat wooden shapes directly on the birch base.
-- Preserve the exact original wall positions, thicknesses, lengths and geometry.
-- Walls must be completely flat and lie on the same plane as the base.
-- No physical height, extrusion, elevation or depth.
-- No vertical side faces.
-- No bevels or raised edges.
-- No 3D effects or cast shadows.
+The final artwork must contain only the physical floorplan elements, without drafting information or text.
 
-IMPORTANT: Walls must be visually prominent through their solid darker wooden colour and filled shapes, NOT through physical height or dimensional effects.
+## 5. CAMERA AND COMPOSITION
 
-INTERIOR ELEMENTS (2D ENGRAVING):
-- Material appearance: Light birch wood.
+- Use a perfectly straight 90-degree top-down orthographic view.
+- No perspective, tilt, isometric angle or three-quarter view.
+- Keep the entire floorplan centred and fully visible.
+- Preserve the original aspect ratio.
+- Do not crop any part of the floorplan.
+- The floorplan should occupy approximately 85% of the available canvas, with a clean margin around it.
+
+## 6. WOODEN MATERIALS AND APPEARANCE
+
+### A. Wooden base
+
+- Use light natural birch wood.
 - Target colour: #F4E5CA.
-- All furniture and fixtures must be represented as flat engraved outlines or details.
-- Engraved details should be subtle, clean and precise.
-- No physical elevation, extrusion or shadows.
-- Preserve the original shapes, positions, orientations and proportions.
+- The base must be a single, completely flat wooden surface.
+- Include subtle, realistic natural wood grain.
+- Avoid excessive grain patterns, knots or distracting textures.
 
-The contrast between the solid dark wooden walls and the light birch engraved interiors should make the architectural layout immediately recognisable.
+### B. Raised wooden walls
 
-# 6. LIGHTING & PHOTOGRAPHIC REALISM
+- Use a dark walnut/brown wooden appearance.
+- Target colour: #C6935C.
+- Walls must be solid-filled, with clearly defined edges.
+- Represent raised walls as separate physical wooden pieces placed on the flat birch base.
+- Maintain consistent wall material and appearance throughout the floorplan.
 
-Render the wooden floorplan as a real, professionally manufactured laser-cut and laser-engraved wooden product.
+### C. Engraved details
 
-- Soft, natural studio lighting.
-- Even illumination across the entire floorplan.
-- Subtle natural wood grain and material characteristics.
-- Realistic birch wood texture.
-- Clean, precise laser-cut boundaries.
-- Sharp and clearly defined engraved details.
-- Natural, understated wooden finish.
-- Avoid excessive contrast, artificial gloss or plastic-like surfaces.
+- Use the light birch base colour for furniture and interior fixtures.
+- Use solid black (#000000) for internal walls classified as engraved.
+- All engraved details must appear flush with the wooden base.
+- They must look laser-engraved or laser-marked, not raised.
 
-The lighting should reveal the natural wooden material without introducing artificial depth.
+## 7. STRICT 2D BASE WITH SELECTIVE RAISED WALLS
 
-STRICTLY AVOID:
-- Directional shadows.
-- Ambient occlusion.
-- Contact shadows.
-- Raised edges.
-- 3D extrusion.
-- Perspective depth.
-- Artificial dimensional effects.
+The artwork must have a flat, two-dimensional floorplan layout, with only the classified raised walls having physical height.
 
-The final artwork must look like a flat wooden product, NOT a 3D architectural model, miniature building or physical diorama.
+The following elements must remain completely flat:
+- Wooden base.
+- Furniture.
+- Interior fixtures.
+- Engraved internal walls.
+- Decorative and architectural details.
 
-# 7. CLEANLINESS & OUTPUT PROTOCOL
+Only the walls classified as raised wooden walls may have physical height.
 
-REMOVE:
-- All text and alphabetic characters.
-- All room names and labels.
-- All dimensions and measurements.
-- All numerical characters.
-- All grid lines and annotation markings.
-- All dotted and dashed drafting lines.
-- All unnecessary symbols, arrows and reference markings.
+Do NOT introduce:
+- Extruded furniture.
+- Raised furniture or fixtures.
+- Extruded floor surfaces.
+- Unnecessary elevation changes.
+- Bevelled edges.
+- Three-dimensional architectural room models.
+- Isometric or perspective views.
+- Fake depth effects.
+- Artificially thickened engraved lines.
 
-IMPORTANT: Remove textual and drafting annotations only. Do not mistake actual architectural lines, furniture outlines or structural details for unwanted markings.
+The distinction between raised and engraved walls must come from their physical construction and colour, not exaggerated visual effects.
 
-BACKGROUND:
-- Plain, pure white background.
-- No visible surface, table or studio environment.
-- No background patterns or textures.
+## 8. LIGHTING AND REALISM
 
-NO ADDITIONAL ELEMENTS:
-- No hands.
-- No rulers.
-- No tools.
-- No decorative objects.
-- No plants.
-- No people.
-- No additional architectural features.
+Create a premium, realistic wooden product appearance.
 
-# 8. FINAL NON-NEGOTIABLE GUARDRAILS
+- Use soft, natural studio illumination.
+- Keep the birch and walnut colours accurate and consistent.
+- Show subtle, believable wood grain.
+- Maintain natural material texture without excessive artificial gloss.
+- Avoid strong directional shadows.
+- Avoid ambient occlusion, exaggerated contact shadows or artificial depth effects.
+- Do not make flat engraved elements appear raised through lighting or shadows.
 
-EVERY ELEMENT MUST BE TWO-DIMENSIONAL.
+The final product should look like a real, carefully manufactured laser-cut and laser-engraved wooden artwork photographed from directly above.
 
-The base, walls, furniture and fixtures must all lie on the same flat plane.
+## 9. CLEAN PRESENTATION
 
-WALLS:
-Solid-filled, flat dark wooden shapes (#C6935C).
+- Use a completely clean white background surrounding the artwork.
+- No room settings or lifestyle scenes.
+- No plants, decorations, furniture outside the floorplan, tools, hands or people.
+- No labels, captions, watermarks, borders or additional graphic elements.
+- No additional objects.
 
-BASE:
-Flat light birch wooden surface (#F4E5CA).
+## 10. FINAL OUTPUT REQUIREMENTS
 
-FURNITURE AND FIXTURES:
-Flat engraved details in light birch.
+The final output must be a premium wooden floorplan artwork with:
 
-The only visual distinction between the walls and the base should be their colour, material appearance and flat shape.
+- A flat, light birch wooden base (#F4E5CA).
+- Raised external perimeter walls, ALWAYS.
+- Internal walls classified using the 60% relative thickness threshold.
+- Raised internal walls in dark walnut/brown (#C6935C) when they meet the threshold.
+- Thin internal walls laser-engraved in black (#000000) when below the threshold.
+- Furniture and fixtures represented as flat engraved details.
+- All original architectural geometry and interior arrangements faithfully preserved.
+- All non-physical annotations and text removed.
+- A perfectly straight top-down orthographic view.
 
-NO EXTRUSION.
-NO ELEVATION.
-NO RAISED SURFACES.
-NO BEVELS.
-NO 3D SHADOWS.
-NO PERSPECTIVE.
+**FINAL NON-NEGOTIABLE RULE:**
 
-Never invent.
-Never omit.
-Never reinterpret.
-Never redesign.
+This is NOT a 3D architectural model.
 
-Translate ONLY the actual physical elements represented in the uploaded floorplan into the specified flat wooden floorplan artwork.
+It is a flat wooden floorplan artwork with selectively raised wooden walls.
 
-FINAL OUTPUT:
+The external perimeter walls must ALWAYS be raised. Internal walls must be classified according to the 60% relative thickness rule. All remaining details must be flat and engraved directly onto the birch base.
 
-A premium, photorealistic, completely flat 2D wooden floorplan with solid dark wooden walls, light birch engraved furniture and fixtures, precise architectural geometry, natural wood textures and a clean white background.
-
-It must look like a real, professionally manufactured laser-cut and laser-engraved wooden floorplan, photographed directly from above.
+Prioritise manufacturing suitability and structural accuracy over artistic interpretation.
     `.trim();
 
     // ✅ Step 3: Generate with padded square image
