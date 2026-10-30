@@ -171,7 +171,7 @@ async function generateWithOpenAI(imageDataUri, prompt) {
   const form = new FormData();
   // form.append('model', 'gpt-image-2');
   form.append('model', 'gpt-image-2.5-sunburst');
-  form.append('quality', 'medium');
+  form.append('quality', 'high');
   form.append('prompt', prompt);
   form.append('image', blob, 'floorplan.png');
 
