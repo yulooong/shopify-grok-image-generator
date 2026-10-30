@@ -280,7 +280,7 @@ Do not turn furniture into raised or three-dimensional objects.
 
 This is a critical requirement. Distinguish between external perimeter walls, internal walls suitable for physical wooden pieces, and thin internal walls that should be engraved.
 
-### A. External perimeter walls – ALWAYS RAISED
+### A. EXTERNAL PERIMETER WALLS – ALWAYS RAISED
 
 - Every wall forming the external boundary or perimeter of the house MUST be represented as a separate, raised wooden wall.
 - This rule applies regardless of the wall's apparent thickness.
@@ -288,18 +288,27 @@ This is a critical requirement. Distinguish between external perimeter walls, in
 - Preserve their original geometry, positions, thicknesses, corners and connections.
 - Do not classify any external perimeter wall as an engraved wall.
 
-### B. Internal walls – RELATIVE THICKNESS CLASSIFICATION
+### B. INTERNAL WALLS – PHYSICAL THICKNESS CLASSIFICATION
 
-Use the thickness of the external perimeter walls as the reference for classifying internal walls.
+The maximum finished physical dimensions of the wooden floorplan are:
 
-- Internal walls with a thickness of 60% or more of the external wall thickness should be represented as separate, raised wooden walls.
-- Internal walls with a thickness below 60% of the external wall thickness should be represented as flat, laser-engraved lines directly onto the birch base.
-- Apply this comparison proportionally, regardless of the overall size or scale of the floorplan.
+- Maximum width: 170mm (17cm).
+- Maximum height: 140mm (14cm).
+
+Scale the original floorplan proportionally to fit within these maximum dimensions while preserving its original aspect ratio.
+
+Classify internal walls according to their actual thickness in the final physical wooden product:
+
+- Internal walls measuring **3mm or more** in the final physical product must be represented as separate, raised wooden walls.
+- Internal walls measuring **less than 3mm** must be represented as flat, laser-engraved lines directly onto the birch base.
+- Apply this rule based on actual final physical dimensions, not pixel dimensions or apparent thickness in the uploaded image.
 - Do not artificially increase or decrease wall thickness to force a particular classification.
 - If an internal wall is too thin or structurally unsuitable to be produced as a separate wooden piece, use laser engraving instead.
-- When the thickness of an internal wall cannot be determined reliably, favour engraving rather than creating a narrow, fragile wooden piece.
+- When the thickness cannot be determined reliably, favour engraving rather than creating a narrow, fragile wooden piece.
 
-### C. Visual distinction
+**IMPORTANT:** The 3mm classification rule applies exclusively to internal walls. External perimeter walls must ALWAYS be raised, regardless of their thickness.
+
+### C. VISUAL DISTINCTION
 
 Use these exact colours:
 
@@ -311,7 +320,7 @@ Raised walls must be solid-filled with the dark walnut/brown colour, not represe
 
 Engraved walls must appear as flat black lines directly on the birch surface.
 
-### D. Structural consistency
+### D. STRUCTURAL CONSISTENCY
 
 - Preserve all original wall positions, intersections, corners and openings.
 - Never omit, merge, reposition or invent walls.
@@ -350,7 +359,7 @@ The final artwork must contain only the physical floorplan elements, without dra
 
 ## 6. WOODEN MATERIALS AND APPEARANCE
 
-### A. Wooden base
+### A. WOODEN BASE
 
 - Use light natural birch wood.
 - Target colour: #F4E5CA.
@@ -358,7 +367,7 @@ The final artwork must contain only the physical floorplan elements, without dra
 - Include subtle, realistic natural wood grain.
 - Avoid excessive grain patterns, knots or distracting textures.
 
-### B. Raised wooden walls
+### B. RAISED WOODEN WALLS
 
 - Use a dark walnut/brown wooden appearance.
 - Target colour: #C6935C.
@@ -366,7 +375,7 @@ The final artwork must contain only the physical floorplan elements, without dra
 - Represent raised walls as separate physical wooden pieces placed on the flat birch base.
 - Maintain consistent wall material and appearance throughout the floorplan.
 
-### C. Engraved details
+### C. ENGRAVED DETAILS
 
 - Use the light birch base colour for furniture and interior fixtures.
 - Use solid black (#000000) for internal walls classified as engraved.
@@ -427,15 +436,16 @@ The final output must be a premium wooden floorplan artwork with:
 
 - A flat, light birch wooden base (#F4E5CA).
 - Raised external perimeter walls, ALWAYS.
-- Internal walls classified using the 60% relative thickness threshold.
-- Raised internal walls in dark walnut/brown (#C6935C) when they meet the threshold.
-- Thin internal walls laser-engraved in black (#000000) when below the threshold.
+- Internal walls classified using the 3mm physical thickness threshold.
+- Raised internal walls in dark walnut/brown (#C6935C) when they are 3mm or thicker.
+- Thin internal walls laser-engraved in black (#000000) when below 3mm.
 - Furniture and fixtures represented as flat engraved details.
 - No invented or automatically added furniture.
 - Empty rooms preserved exactly as they appear in the original.
 - All original architectural geometry and interior arrangements faithfully preserved.
 - All non-physical annotations and text removed.
 - A perfectly straight top-down orthographic view.
+- Final physical dimensions not exceeding 170mm × 140mm, with the original aspect ratio preserved.
 
 **FINAL NON-NEGOTIABLE RULE:**
 
@@ -443,7 +453,7 @@ This is NOT a 3D architectural model.
 
 It is a flat wooden floorplan artwork with selectively raised wooden walls.
 
-The external perimeter walls must ALWAYS be raised. Internal walls must be classified according to the 60% relative thickness rule. All furniture and fixtures must come exclusively from the uploaded floorplan. Empty rooms must remain empty. All remaining details must be flat and engraved directly onto the birch base.
+The external perimeter walls must ALWAYS be raised. Internal walls must be classified according to the 3mm physical thickness rule. All furniture and fixtures must come exclusively from the uploaded floorplan. Empty rooms must remain empty. All remaining details must be flat and engraved directly onto the birch base.
 
 Prioritise manufacturing suitability and structural accuracy over artistic interpretation.
     `.trim();
