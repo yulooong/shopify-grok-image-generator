@@ -171,7 +171,7 @@ async function generateWithOpenAI(imageDataUri, prompt) {
   const form = new FormData();
   // form.append('model', 'gpt-image-2');
   form.append('model', 'gpt-image-2.5-sunburst');
-  form.append('quality', 'high');
+  form.append('quality', 'medium');
   form.append('prompt', prompt);
   form.append('image', blob, 'floorplan.png');
 
@@ -214,38 +214,186 @@ export default async function handler(req, res) {
       await padToSquare(imageDataUri);
 
     const finalPrompt = `
-ROLE: Professional Architectural Model Maker & Industrial Designer
-🛑 STRUCTURAL INTEGRITY (NON-NEGOTIABLE SOURCE OF TRUTH):
-THE UPLOADED IMAGE IS THE ABSOLUTE BLUEPRINT.
-DO NOT remove, shift, add, modify, or invent any structures, partitions, or interior elements.
-The 3D walls must be a perfect 1:1 extrusion of the original lines.
-Preserve the exact layout, room proportions, spatial geometry, and all interior elements of the uploaded file.
+ROLE: Professional Architectural Model Maker, Industrial Designer and Precision Woodworking Specialist.
 
-TASK:
-Convert the uploaded floorplan into a high-fidelity 3D wooden "Site Model" photograph. Faithfully translate every element visible in the uploaded floorplan into the wooden material language defined below. Do not add, remove, or invent any elements.
-FURNITURE TRANSLATION RULE:
-If the uploaded floorplan contains furniture or interior outlines, translate every piece faithfully as a 2D engraved element.
-If the uploaded floorplan contains no furniture, leave the interiors empty. Do not auto-populate or invent furniture.
+Your task is to transform the uploaded floorplan into a photorealistic 3D wooden architectural site model.
 
-CAMERA & VIEWPOINT:
-View: Strict 90-degree Top-Down Orthographic Projection.
-Lens: Zero perspective distortion, zero vanishing points.
-Framing: The model must be centered and fill 85% of the frame.
+# 1. ABSOLUTE PRIORITY: STRUCTURAL ACCURACY
 
-MATERIAL & COLOR SPECS:
-BASE: A single CNC-cut sheet of light birch wood (#F4E5CA).
-WALLS (3D): Extruded 3D laser-cut wood blocks (#C6935C). 10mm height. Soft ambient occlusion shadows.
-INTERIOR ELEMENTS (2D ENGRAVED): All furniture and fixtures as light birch wood engravings (#F4E5CA). 100% flat, no shadows.
+THE UPLOADED IMAGE IS THE SOLE SOURCE OF TRUTH.
 
-CLEANLINESS & OUTPUT PROTOCOL:
-REMOVAL: Wipe all text, room labels, dimensions, grid lines. No alphabetic or numeric characters.
-BACKGROUND: Plain white background.
-NO EXTRA ELEMENTS: No hands, rulers, tables, or studio props.
+Treat the uploaded floorplan as a fixed architectural blueprint, NOT as a reference or creative inspiration.
 
-GUARDRAILS:
-Walls must carry the shadow and 3D extruded effect.
-Everything else must be strictly 2D, not raised, and cast no shadows.
-Never invent. Never omit. Translate only what is shown.
+Preserve the original geometry with the highest possible accuracy.
+
+NON-NEGOTIABLE RULES:
+- Do not add, remove, move, resize, rotate, merge or reinterpret any structural element.
+- Preserve the exact positions, lengths, thicknesses and orientations of all walls.
+- Preserve every wall intersection, corner, partition, doorway, opening and passage.
+- Do not close existing openings or create new ones.
+- Preserve the exact room layout, proportions and spatial relationships.
+- Do not straighten, simplify, smooth or optimise the original architectural geometry.
+- Never substitute an approximate reconstruction for an original detail.
+
+The 3D walls must follow the original floorplan lines as faithfully as possible, with no independent redesign or architectural reinterpretation.
+
+PRIORITY HIERARCHY:
+1. Structural and geometric accuracy.
+2. Preservation of all original physical interior elements.
+3. Correct distinction between 3D walls and 2D engravings.
+4. Material and colour accuracy.
+5. Photographic realism and visual aesthetics.
+
+If any artistic enhancement conflicts with structural accuracy, ALWAYS prioritise structural accuracy.
+
+# 2. INTERIOR ELEMENTS & FURNITURE TRANSLATION
+
+Faithfully translate every visible furniture item, fixture and physical interior detail into a flat 2D engraved representation.
+
+Examples include:
+- Beds, sofas, chairs and dining tables.
+- Kitchen counters and cabinets.
+- Toilets, sinks, bathtubs and shower areas.
+- Wardrobes and storage units.
+- Other furniture and fixtures visible in the original floorplan.
+
+STRICT RULES:
+- Every original physical furniture item must be retained.
+- Preserve its original position, orientation, shape and relative proportions.
+- All furniture and fixtures must remain completely flat.
+- Never turn furniture into 3D miniature objects.
+- Never create raised surfaces, additional wooden blocks or physical depth for interior elements.
+- Do not automatically furnish empty rooms.
+- If the original floorplan contains no furniture, leave those areas empty.
+
+If an element is ambiguous, preserve its original shape and position rather than guessing its identity or inventing a replacement.
+
+# 3. ARCHITECTURAL ANNOTATION & LINE CLEANUP
+
+The final wooden model must represent the actual physical architectural layout, NOT the technical drafting annotations of the original floorplan.
+
+REMOVE all non-physical reference markings and drafting annotations, including:
+- Dotted and dashed lines.
+- Dashed measurement guides.
+- Grid lines.
+- Dimension extension lines.
+- Construction guides.
+- Leader lines and annotation pointers.
+- Arrows, symbols and reference markings.
+- Room labels and text annotations.
+- Other non-structural drafting markings.
+
+IMPORTANT DISTINCTION:
+
+Do not automatically preserve every line simply because it appears in the original floorplan.
+
+Retain actual physical architectural structures, walls, partitions, openings, furniture and fixtures that belong in the final wooden model.
+
+Remove decorative, projected, hidden, reference or annotation lines that do not represent physical elements to be manufactured in the wooden model.
+
+Dotted or dashed lines must NOT be converted into solid walls, engraved furniture or raised 3D structures.
+
+When a dotted or dashed line is ambiguous, exclude it rather than inventing a physical structure from it.
+
+# 4. CAMERA & VIEWPOINT
+
+VIEW: Strict 90-degree top-down orthographic projection.
+
+LENS: Zero perspective distortion. No vanishing points. No tilted camera.
+
+FRAMING:
+- Centre the complete wooden model.
+- The model should occupy approximately 85% of the image.
+- Maintain the original floorplan's aspect ratio.
+- Ensure the entire model remains visible without cropping.
+- Keep all walls and interior details sharp and clearly distinguishable.
+
+# 5. MATERIAL & COLOUR SPECIFICATIONS
+
+BASE:
+- One continuous CNC-cut sheet of light birch wood.
+- Base colour: #F4E5CA.
+- Subtle, natural birch wood grain.
+- Smooth, consistent surface.
+- No unnecessary patterns or decorative textures.
+
+WALLS (3D EXTRUSION):
+- Material: Darker natural wood.
+- Target colour: #C6935C.
+- Height: 10mm.
+- Clearly visible vertical side faces.
+- Consistent wall height and thickness.
+- Clean, precise laser-cut edges.
+- Distinct 3D extrusion above the birch base.
+- Subtle, physically realistic ambient occlusion and contact shadows.
+
+Wall geometry must remain faithful to the original blueprint. Do not artificially thicken, thin or reshape walls for visual effect.
+
+INTERIOR ELEMENTS (2D ENGRAVING):
+- Material appearance: Light birch wood.
+- Target colour: #F4E5CA.
+- Flat engraved or etched details on the base.
+- No physical elevation.
+- No cast shadows.
+- Preserve the recognisable outlines and details of the original furniture and fixtures.
+
+# 6. LIGHTING & PHOTOGRAPHIC REALISM
+
+Render the wooden model as a professionally manufactured physical architectural model.
+
+- Soft, natural studio lighting.
+- Subtle directional lighting to reveal the 3D wall extrusion.
+- Realistic contact shadows beneath the walls.
+- Natural wood grain and material characteristics.
+- Sharp, well-defined laser-cut edges.
+- Realistic ambient occlusion at wall intersections.
+- Avoid excessive contrast, artificial gloss or plastic-like surfaces.
+
+The lighting must enhance the physical depth of the walls without changing the appearance or visibility of the 2D engraved interior elements.
+
+# 7. CLEANLINESS & OUTPUT PROTOCOL
+
+REMOVE:
+- All text and alphabetic characters.
+- All room names and labels.
+- All dimensions and measurements.
+- All numerical characters.
+- All grid lines and annotation markings.
+- All dotted and dashed drafting lines.
+
+IMPORTANT: Remove textual and drafting annotations only. Do not mistake actual architectural lines, furniture outlines or structural details for unwanted markings.
+
+BACKGROUND:
+- Plain, pure white background.
+- No visible surface, table or studio environment.
+
+NO ADDITIONAL ELEMENTS:
+- No hands.
+- No rulers.
+- No tools.
+- No decorative objects.
+- No plants.
+- No people.
+- No additional architectural features.
+
+# 8. FINAL NON-NEGOTIABLE GUARDRAILS
+
+THE WALLS ARE THE ONLY 3D ELEMENTS.
+
+Everything else must remain strictly 2D and engraved onto the birch base.
+
+Walls must have clearly visible physical height, darker wooden side faces and realistic contact shadows.
+
+Furniture and fixtures must remain completely flat, with no elevation or cast shadows.
+
+Never invent.
+Never omit.
+Never reinterpret.
+Never redesign.
+
+Translate ONLY the actual physical elements represented in the uploaded floorplan into the specified wooden architectural model.
+
+The final result must look like a real, professionally manufactured miniature wooden architectural site model, while preserving the original floorplan's geometry and interior details as faithfully as possible.
     `.trim();
 
     // ✅ Step 3: Generate with padded square image
