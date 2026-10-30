@@ -218,7 +218,7 @@ export default async function handler(req, res) {
 
 Transform the uploaded floorplan into a premium, photorealistic wooden floorplan artwork suitable for laser cutting and engraving.
 
-The uploaded floorplan is the **sole source of truth** for all architectural geometry and interior details. Reproduce it faithfully. Do not redesign, reinterpret, simplify or invent any structural elements.
+The uploaded floorplan is the **sole source of truth** for all architectural geometry and interior details. Reproduce it faithfully. Do not redesign, reinterpret, simplify or invent any structural elements or furniture.
 
 ## 1. ABSOLUTE PRIORITY: STRUCTURAL ACCURACY
 
@@ -257,8 +257,24 @@ Requirements:
 - Represent all furniture and interior fixtures as flat engraved details on the wooden base.
 - Use the light birch colour for engraved furniture and fixtures.
 - Maintain recognisable shapes and details without introducing unnecessary complexity.
-- Do not invent, remove, rearrange or replace furniture.
-- Do not turn furniture into raised or three-dimensional objects.
+- Do not remove, rearrange or replace existing furniture.
+
+### STRICT FURNITURE PRESERVATION – DO NOT INVENT OR ADD FURNITURE
+
+The uploaded floorplan is the sole source of truth for all furniture and interior fixtures.
+
+- Only reproduce furniture, fixtures and fittings that are explicitly visible in the original uploaded floorplan.
+- NEVER add new furniture, even if a room appears empty, unfinished or unusually spacious.
+- Do not automatically furnish empty bedrooms, living rooms, dining rooms or other spaces.
+- Do not assume what furniture a room should contain based on its room type or intended purpose.
+- Do not add beds, sofas, chairs, tables, wardrobes, cabinets, kitchen appliances or decorative objects unless they are visibly present in the original floorplan.
+- Do not fill empty spaces to improve visual balance or make the artwork look more aesthetically pleasing.
+- Do not complete partially furnished rooms by guessing what might be missing.
+- If a room is empty in the original floorplan, it MUST remain empty in the final artwork.
+
+**IMPORTANT:** An empty room is an intentional and valid part of the original floorplan. Preserve empty spaces exactly as they appear. Architectural accuracy always takes priority over visual completeness or aesthetic enhancement.
+
+Do not turn furniture into raised or three-dimensional objects.
 
 ## 3. WALL CLASSIFICATION AND MANUFACTURING RULES
 
@@ -415,6 +431,8 @@ The final output must be a premium wooden floorplan artwork with:
 - Raised internal walls in dark walnut/brown (#C6935C) when they meet the threshold.
 - Thin internal walls laser-engraved in black (#000000) when below the threshold.
 - Furniture and fixtures represented as flat engraved details.
+- No invented or automatically added furniture.
+- Empty rooms preserved exactly as they appear in the original.
 - All original architectural geometry and interior arrangements faithfully preserved.
 - All non-physical annotations and text removed.
 - A perfectly straight top-down orthographic view.
@@ -425,7 +443,7 @@ This is NOT a 3D architectural model.
 
 It is a flat wooden floorplan artwork with selectively raised wooden walls.
 
-The external perimeter walls must ALWAYS be raised. Internal walls must be classified according to the 60% relative thickness rule. All remaining details must be flat and engraved directly onto the birch base.
+The external perimeter walls must ALWAYS be raised. Internal walls must be classified according to the 60% relative thickness rule. All furniture and fixtures must come exclusively from the uploaded floorplan. Empty rooms must remain empty. All remaining details must be flat and engraved directly onto the birch base.
 
 Prioritise manufacturing suitability and structural accuracy over artistic interpretation.
     `.trim();
